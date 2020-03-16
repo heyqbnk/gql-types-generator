@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import {Command} from 'commander';
 import {compile} from './compile';
-import {getFilePaths} from './fs';
-import {withCwd} from '../dist';
+import {withCwdAndGlob} from './fs';
+import {withCwd} from './fs';
 
 const program = new Command('gql-types-generator');
 
@@ -18,7 +18,10 @@ function parsePlacement(value: string) {
 program
   .option(
     '--sort <sort>',
-    'how to display compiled types. Valid values: "as-is" and "default"',
+    'how to display compiled types. Valid values are "as-is" and ' +
+    '"default". By default, generator compiles scalars first, then enums, ' +
+    'interfaces, inputs, unions and then types. "as-is" places types as they ' +
+    'are placed in schema',
     parsePlacement,
   )
   .requiredOption('--output-path <path>', 'path to file where typings will be saved')
@@ -26,11 +29,10 @@ program
   .parse(process.argv);
 
 (async () => {
-  const source = await getFilePaths(program.schemaArtifacts);
   await compile({
     outputPath: withCwd(program.outputPath),
-    source,
-    sort: program.typesPlacement,
+    source: await withCwdAndGlob(program.schemaArtifacts),
+    sort: program.sort,
   });
 
   process.exit(0);

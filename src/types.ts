@@ -21,7 +21,7 @@ export type TSEntityType = 'interface' | 'type' | 'enum';
 /**
  * List of scalar GQL types
  */
-export type GQLScalarTypeName = 'Boolean' | 'Float' | 'String' | 'Int' | 'ID';
+export type GQLInternalTypeName = 'Boolean' | 'Float' | 'String' | 'Int' | 'ID';
 
 /**
  * Shared compile function options
@@ -107,4 +107,4 @@ export type ParsedGQLType = ParsedGQLEnumType
  * Map of scalar types of GQL with compiled TS types. States
  * which scalar type converts to which TS type
  */
-export type GQLScalarCompiledTypesMap = Record<GQLScalarTypeName, CompiledTypeName>;
+export type GQLScalarCompiledTypesMap = Record<GQLInternalTypeName, CompiledTypeName>;

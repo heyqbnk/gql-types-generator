@@ -1,7 +1,7 @@
 import {
   CompiledTypeName,
   GQLScalarCompiledTypesMap,
-  GQLScalarTypeName,
+  GQLInternalTypeName,
 } from '../types';
 import {TypeNode} from 'graphql';
 
@@ -35,16 +35,16 @@ const gqlScalarTypesMap: GQLScalarCompiledTypesMap = {
 
 /**
  * List of GQL scalar types
- * @type {GQLScalarTypeName[]}
+ * @type {GQLInternalTypeName[]}
  */
-const gqlScalarTypes = Object.keys(gqlScalarTypesMap) as GQLScalarTypeName[];
+const gqlScalarTypes = Object.keys(gqlScalarTypesMap) as GQLInternalTypeName[];
 
 /**
  * States if value is GQL scalar type
  * @param value
  * @returns {value is GQLScalarType}
  */
-export function isGQLScalarType(value: any): value is GQLScalarTypeName {
+export function isGQLScalarType(value: any): value is GQLInternalTypeName {
   return gqlScalarTypes.includes(value);
 }
 

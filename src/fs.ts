@@ -19,7 +19,7 @@ export function withCwd(path: string): string {
  * @param {string} pattern
  * @returns {Promise<string[]>}
  */
-export async function getFilePaths(pattern: string): Promise<string[]> {
+export async function withCwdAndGlob(pattern: string): Promise<string[]> {
   const patterns = pattern.split(',').map(withCwd).join(',');
 
   return new Promise((res, rej) => {
