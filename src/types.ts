@@ -28,6 +28,7 @@ export type GQLScalarTypeName = 'Boolean' | 'Float' | 'String' | 'Int' | 'ID';
  */
 export interface CompileOptionsShared {
   outputPath: string;
+  sort?: 'as-is' | 'default';
 }
 
 /**
@@ -75,20 +76,32 @@ export interface ParsedGQLTypeBase {
   description: string | null;
 }
 
-export interface ParsedGQLEnumEntity extends ParsedGQLTypeBase {
+export interface ParsedGQLEnumType extends ParsedGQLTypeBase {
   type: 'enum';
   values: ParsedGQLEnumValue[];
 }
 
-export interface ParsedGQLTypeEntity extends ParsedGQLTypeBase {
-  type: 'interface' | 'type';
+export interface ParsedGQLTypeOrInterface extends ParsedGQLTypeBase {
+  type: 'interface';
   fields: ParsedGQLField[];
+}
+
+export interface ParsedGQLScalarType extends ParsedGQLTypeBase {
+  type: 'type';
+}
+
+export interface ParsedGQLUnionType extends ParsedGQLTypeBase {
+  type: 'type';
+  definition: string;
 }
 
 /**
  * Parsed GQL type
  */
-export type ParsedGQLType = ParsedGQLEnumEntity | ParsedGQLTypeEntity;
+export type ParsedGQLType = ParsedGQLEnumType
+  | ParsedGQLTypeOrInterface
+  | ParsedGQLScalarType
+  | ParsedGQLUnionType;
 
 /**
  * Map of scalar types of GQL with compiled TS types. States

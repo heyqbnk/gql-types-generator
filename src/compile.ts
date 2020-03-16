@@ -1,16 +1,34 @@
 import {buildSchema} from 'graphql';
+import {CompileOptions} from './types';
+import {getFileContent, writeFile} from './fs';
 import {
-  ParsedGQLType, CompileOptions,
-} from './types';
-import {getFileContent, withCwd, writeFile} from './fs';
-import {
-  generateType,
   parseEnumDefinitionNode,
-  parseTypeDefinitionNode,
+  parseInterfaceDefinitionNode,
+  parseScalarTypeDefinitionNode,
+  parseUnionTypeDefinitionNode,
 } from './utils';
+import {
+  generateGQLEnum,
+  generateGQLInterface,
+  generateGQLScalar, generateGQLUnion,
+} from './utils/generation';
 
+const weights = {
+  ScalarTypeDefinition: 0,
+  EnumTypeDefinition: 1,
+  InterfaceTypeDefinition: 2,
+  InputObjectTypeDefinition: 3,
+  UnionTypeDefinition: 4,
+  ObjectTypeDefinition: 5,
+};
+
+/**
+ * Compiles schema artifacts to TS types
+ * @param {CompileOptions} options
+ * @returns {Promise<void>}
+ */
 export async function compile(options: CompileOptions) {
-  const {outputPath} = options;
+  const {outputPath, sort} = options;
   let schemaString: string = '';
 
   if ('source' in options) {
@@ -27,24 +45,47 @@ export async function compile(options: CompileOptions) {
 
   // Accumulator containing compiled types
   const compiledTypes = Object
+  // Get all types
     .values(typeMap)
+    // Sort depending on sorting type
+    .sort((a, b) => {
+      if (a.astNode || b.astNode) {
+        if (!a.astNode) {
+          return -1;
+        }
+        if (!b.astNode) {
+          return 1;
+        }
+        return sort === 'as-is'
+          ? a.astNode.loc.start - b.astNode.loc.start
+          : weights[a.astNode.kind] - weights[b.astNode.kind];
+      }
+      return 0;
+    })
     .reduce<string[]>((acc, type) => {
       const {astNode} = type;
 
       // We parse only types used in schema. We can meet some scalar types
       // in typeMap. Scalar types dont have astNode
       if (astNode !== undefined) {
-        let parsedType: ParsedGQLType | null = null;
-        if ('fields' in astNode) {
-          parsedType = parseTypeDefinitionNode(astNode);
-        }
-
-        if ('values' in astNode) {
-          parsedType = parseEnumDefinitionNode(astNode);
-        }
-
-        if (parsedType) {
-          acc.push(generateType(parsedType));
+        switch (astNode.kind) {
+          case 'ObjectTypeDefinition':
+          case 'InputObjectTypeDefinition':
+            acc.push(
+              generateGQLInterface(parseInterfaceDefinitionNode(astNode)),
+            );
+            break;
+          case 'ScalarTypeDefinition':
+            acc.push(generateGQLScalar(parseScalarTypeDefinitionNode(astNode)));
+            break;
+          case 'UnionTypeDefinition':
+            acc.push(generateGQLUnion(parseUnionTypeDefinitionNode(astNode)));
+            break;
+          case 'EnumTypeDefinition':
+            acc.push(
+              generateGQLEnum(parseEnumDefinitionNode(astNode)),
+            );
+            break;
         }
       }
 
@@ -52,5 +93,5 @@ export async function compile(options: CompileOptions) {
     }, [])
     .join('\n\n');
 
-  writeFile(withCwd(outputPath), compiledTypes);
+  writeFile(outputPath, compiledTypes);
 }

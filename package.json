@@ -17,10 +17,11 @@
     "dist/*"
   ],
   "bin": {
-    "gql-types-generator": "dist/cli.js"
+    "gql-types-generator": "src/cli.js"
   },
   "scripts": {
-    "build": "rimraf dist && tsc -p tsconfig.build.json && node post-compile.js"
+    "build": "rimraf dist && tsc -p tsconfig.build.json && node post-compile.js",
+    "dev": "tsc -w --noEmit"
   },
   "dependencies": {
     "commander": "^5.0.0",

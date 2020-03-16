@@ -13,9 +13,7 @@
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": false,
-    "baseUrl": ".",
-    "outDir": "./dist",
-    "declaration": true
+    "baseUrl": "."
   },
   "include": [
     "src"
