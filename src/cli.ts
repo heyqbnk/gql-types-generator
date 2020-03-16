@@ -25,15 +25,12 @@ program
     parsePlacement,
   )
   .requiredOption('--output-path <path>', 'path to file where typings will be saved')
-  .requiredOption('--schema-artifacts <globs>', 'glob used to find schema artifacts. These artifacts will be concatenated into the only 1 file and parsed by graphql package')
+  .arguments('<schema-globs>')
+  .action(async globs => {
+    await compile({
+      outputPath: withCwd(program.outputPath),
+      source: await withCwdAndGlob(globs),
+      sort: program.sort,
+    });
+  })
   .parse(process.argv);
-
-(async () => {
-  await compile({
-    outputPath: withCwd(program.outputPath),
-    source: await withCwdAndGlob(program.schemaArtifacts),
-    sort: program.sort,
-  });
-
-  process.exit(0);
-})();

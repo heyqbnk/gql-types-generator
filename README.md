@@ -12,7 +12,7 @@ gql-types-generator
 [size-image]: https://img.shields.io/bundlephobia/minzip/gql-types-generator
 [version-image]: https://img.shields.io/npm/v/gql-types-generator
 
-Package to generate types depending on GraphQL schema.
+Package to generate types depending on GraphQL scheme, mutations and queries.
 
 ## Install
 ```
@@ -32,12 +32,12 @@ After installation of package is done, `gql-types-generator` command
 becomes available.
 
 ```bash
-Usage: gql-types-generator [options]
+Usage: gql-types-generator [options] <schema-globs>
 
 Options:
-  -o --output-path <path>        path to file where typings will be saved
-  -s --schema-artifacts <globs>  glob used to find schema artifacts. These artifacts will be concatenated into the only 1 file and parsed by graphql package
-  -h, --help                     display help for command
+  --sort <sort>         how to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema
+  --output-path <path>  path to file where typings will be saved
+  -h, --help            display help for command
 ```
 
 ### Programmatic control
@@ -53,7 +53,8 @@ compile({
     path.resolve(__dirname, 'schema-artifacts-folder-1/*.graphql'),
     path.resolve(__dirname, 'schema-artifacts-folder-2/*.graphql')
   ],
-  outputPath: path.resolve(__dirname, 'types.d.ts'), 
+  outputPath: path.resolve(__dirname, 'types.d.ts'),
+  sort: 'as-is',
 });
 
 // OR
@@ -61,6 +62,7 @@ compile({
 compile({
   source: path.resolve(__dirname, 'schema-artifacts/*.graphql'),
   outputPath: path.resolve(__dirname, 'types.d.ts'),
+  sort: 'default',
 });
 
 // OR
