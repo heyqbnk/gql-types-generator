@@ -24,6 +24,32 @@ export type TSEntityType = 'interface' | 'type' | 'enum';
 export type GQLScalarTypeName = 'Boolean' | 'Float' | 'String' | 'Int' | 'ID';
 
 /**
+ * Shared compile function options
+ */
+export interface CompileOptionsShared {
+  outputPath: string;
+}
+
+/**
+ * Compile function options to compile file
+ */
+export interface CompileFileOptions extends CompileOptionsShared {
+  source: string | string[];
+}
+
+/**
+ * Compile function options to compile text
+ */
+export interface CompileTextOptions extends CompileOptionsShared {
+  schema: string;
+}
+
+/**
+ * Possible compile options
+ */
+export type CompileOptions = CompileFileOptions | CompileTextOptions;
+
+/**
  * Parsed GQL enum value
  */
 export interface ParsedGQLEnumValue {
@@ -34,7 +60,7 @@ export interface ParsedGQLEnumValue {
 /**
  * Parsed GQL type field
  */
-export interface ParsedField {
+export interface ParsedGQLField {
   definition: string;
   description: string | null;
   name: string;
@@ -43,26 +69,26 @@ export interface ParsedField {
 /**
  * Parsed GQL type converted to TS entity
  */
-export interface ParsedEntityBase {
+export interface ParsedGQLTypeBase {
   type: TSEntityType;
   name: string;
   description: string | null;
 }
 
-export interface ParsedEnumEntity extends ParsedEntityBase {
+export interface ParsedGQLEnumEntity extends ParsedGQLTypeBase {
   type: 'enum';
   values: ParsedGQLEnumValue[];
 }
 
-export interface ParsedTypeEntity extends ParsedEntityBase {
+export interface ParsedGQLTypeEntity extends ParsedGQLTypeBase {
   type: 'interface' | 'type';
-  fields: ParsedField[];
+  fields: ParsedGQLField[];
 }
 
 /**
  * Parsed GQL type
  */
-export type ParsedEntity = ParsedEnumEntity | ParsedTypeEntity;
+export type ParsedGQLType = ParsedGQLEnumEntity | ParsedGQLTypeEntity;
 
 /**
  * Map of scalar types of GQL with compiled TS types. States

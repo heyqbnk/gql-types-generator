@@ -1,18 +1,21 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "esModuleInterop": true,
     "target": "es5",
+    "lib": ["esnext"],
     "module": "commonjs",
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "removeComments": true,
+    "removeComments": false,
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": false,
     "baseUrl": ".",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "declaration": true
   },
   "include": [
     "src"
