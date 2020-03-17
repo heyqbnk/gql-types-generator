@@ -93,3 +93,18 @@ export function getTypeDefinition(node: TypeNode, nullable = true): string {
       return definition;
   }
 }
+
+/**
+ * Wraps schema with warning that types should be edited due to they are
+ * compiled
+ * @param {string} types
+ * @returns {string}
+ */
+export function wrapWithWarning(types: string): string {
+  const line = '// ' + new Array(20).fill('=').join('') + '\n';
+  return line
+    + '// THESE TYPES ARE COMPILED VIA GQL-TYPES-GENERATOR AND SHOULD NOT BE\n' +
+    '// DIRECTLY EDITED\n'
+    + line
+    + types;
+}

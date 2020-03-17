@@ -16,17 +16,19 @@ import {getTypeDefinition, transpileGQLTypeName} from './misc';
 /**
  * Parses GQL enum type
  * @param {EnumTypeDefinitionNode} node
+ * @param includeDescription
  * @returns {ParsedGQLEnumType}
  */
 export function parseEnumDefinitionNode(
   node: EnumTypeDefinitionNode,
+  includeDescription: boolean,
 ): ParsedGQLEnumType {
   const {values, description, name} = node;
   const parsedValues = values.reduce<ParsedGQLEnumValue[]>((vAcc, v) => {
     const {description, name} = v;
 
     vAcc.push({
-      description: description ? description.value : null,
+      description: description && includeDescription ? description.value : null,
       value: name.value,
     });
 
@@ -34,7 +36,7 @@ export function parseEnumDefinitionNode(
   }, []);
 
   return {
-    description: description ? description.value : null,
+    description: description && includeDescription ? description.value : null,
     name: name.value,
     type: 'enum',
     values: parsedValues,
@@ -44,10 +46,12 @@ export function parseEnumDefinitionNode(
 /**
  * Parses GQL types which have fields
  * @param {ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode} node
+ * @param includeDescription
  * @returns {ParsedGQLType}
  */
 export function parseInterfaceDefinitionNode(
   node: ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode,
+  includeDescription: boolean,
 ): ParsedGQLTypeOrInterface {
   const {fields, description, name} = node;
   const parsedFields = [...fields]
@@ -56,14 +60,15 @@ export function parseInterfaceDefinitionNode(
 
       fAcc.push({
         definition: getTypeDefinition(type),
-        description: description ? description.value : null,
+        description: description && includeDescription
+          ? description.value : null,
         name: name.value,
       });
       return fAcc;
     }, []);
 
   return {
-    description: description ? description.value : null,
+    description: description && includeDescription ? description.value : null,
     type: 'interface',
     fields: parsedFields,
     name: name.value,
@@ -73,15 +78,17 @@ export function parseInterfaceDefinitionNode(
 /**
  * Parses GQL scalar type
  * @param {ScalarTypeDefinitionNode} node
+ * @param includeDescription
  * @returns {ParsedGQLScalarType}
  */
 export function parseScalarTypeDefinitionNode(
   node: ScalarTypeDefinitionNode,
+  includeDescription: boolean,
 ): ParsedGQLScalarType {
   const {name, description} = node;
 
   return {
-    description: description ? description.value : null,
+    description: description && includeDescription ? description.value : null,
     type: 'type',
     name: name.value,
   };
@@ -90,17 +97,19 @@ export function parseScalarTypeDefinitionNode(
 /**
  * Parses GQL union type
  * @param {UnionTypeDefinitionNode} node
+ * @param includeDescription
  * @returns {ParsedGQLUnionType}
  */
 export function parseUnionTypeDefinitionNode(
   node: UnionTypeDefinitionNode,
+  includeDescription: boolean,
 ): ParsedGQLUnionType {
   const {name, description, types} = node;
 
   return {
     type: 'type',
     name: name.value,
-    description: description ? description.value : null,
+    description: description && includeDescription ? description.value : null,
     definition: types.map(t => transpileGQLTypeName(t.name.value)).join(' | '),
   };
 }

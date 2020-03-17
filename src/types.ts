@@ -28,6 +28,7 @@ export type GQLInternalTypeName = 'Boolean' | 'Float' | 'String' | 'Int' | 'ID';
  */
 export interface CompileOptionsShared {
   outputPath: string;
+  removeDescription?: boolean;
   sort?: 'as-is' | 'default';
 }
 

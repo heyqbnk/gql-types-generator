@@ -16,21 +16,23 @@ function parsePlacement(value: string) {
 }
 
 program
+  .option('--remove-description', 'states if we should remove description')
   .option(
-    '--sort <sort>',
+    '-s --sort <sort>',
     'how to display compiled types. Valid values are "as-is" and ' +
     '"default". By default, generator compiles scalars first, then enums, ' +
     'interfaces, inputs, unions and then types. "as-is" places types as they ' +
     'are placed in schema',
     parsePlacement,
   )
-  .requiredOption('--output-path <path>', 'path to file where typings will be saved')
+  .requiredOption('-o --output-path <path>', 'path to file where typings will be saved')
   .arguments('<schema-globs>')
   .action(async globs => {
     await compile({
-      outputPath: withCwd(program.outputPath),
+      removeDescription: 'removeDescription' in program,
       source: await withCwdAndGlob(globs),
       sort: program.sort,
+      outputPath: withCwd(program.outputPath),
     });
   })
   .parse(process.argv);

@@ -12,6 +12,7 @@ import {
   generateGQLInterface,
   generateGQLScalar, generateGQLUnion,
 } from './utils/generation';
+import {wrapWithWarning} from './utils/misc';
 
 const weights = {
   ScalarTypeDefinition: 0,
@@ -28,7 +29,8 @@ const weights = {
  * @returns {Promise<void>}
  */
 export async function compile(options: CompileOptions) {
-  const {outputPath, sort} = options;
+  const {outputPath, sort, removeDescription} = options;
+  const includeDescription = !removeDescription;
   let schemaString: string = '';
 
   if ('source' in options) {
@@ -44,7 +46,7 @@ export async function compile(options: CompileOptions) {
   const typeMap = schema.getTypeMap();
 
   // Accumulator containing compiled types
-  const compiledTypes = Object
+  let compiledTypes = Object
   // Get all types
     .values(typeMap)
     // Sort depending on sorting type
@@ -66,24 +68,36 @@ export async function compile(options: CompileOptions) {
       const {astNode} = type;
 
       // We parse only types used in schema. We can meet some scalar types
-      // in typeMap. Scalar types dont have astNode
+      // in typeMap. Internal types dont have astNode
       if (astNode !== undefined) {
         switch (astNode.kind) {
           case 'ObjectTypeDefinition':
           case 'InputObjectTypeDefinition':
             acc.push(
-              generateGQLInterface(parseInterfaceDefinitionNode(astNode)),
+              generateGQLInterface(
+                parseInterfaceDefinitionNode(astNode, includeDescription),
+              ),
             );
             break;
           case 'ScalarTypeDefinition':
-            acc.push(generateGQLScalar(parseScalarTypeDefinitionNode(astNode)));
+            acc.push(
+              generateGQLScalar(
+                parseScalarTypeDefinitionNode(astNode, includeDescription),
+              ),
+            );
             break;
           case 'UnionTypeDefinition':
-            acc.push(generateGQLUnion(parseUnionTypeDefinitionNode(astNode)));
+            acc.push(
+              generateGQLUnion(
+                parseUnionTypeDefinitionNode(astNode, includeDescription),
+              ),
+            );
             break;
           case 'EnumTypeDefinition':
             acc.push(
-              generateGQLEnum(parseEnumDefinitionNode(astNode)),
+              generateGQLEnum(
+                parseEnumDefinitionNode(astNode, includeDescription),
+              ),
             );
             break;
         }
@@ -92,6 +106,9 @@ export async function compile(options: CompileOptions) {
       return acc;
     }, [])
     .join('\n\n');
+
+  // Add warning that these types are compiled and should not be edited
+  compiledTypes = wrapWithWarning(compiledTypes);
 
   writeFile(outputPath, compiledTypes);
 }
