@@ -1,13 +1,12 @@
 import {buildSchema, GraphQLSchema, parse} from 'graphql';
 import {CompiledOperation, CompileOptions, DisplayType} from './types';
-import {getFileContent, withCwdAndGlob, write} from './fs';
+import {getFileContent, write} from './fs';
 import {
   parseTypeDefinitionNode,
   generateGQLOperation,
   generateTSTypeDefinition,
   getSorter,
-  wrapWithWarning,
-  parseOperation, toCamelCase, wrapAsDefaultExport,
+  parseOperationDefinitionNode, toCamelCase, asModuleExports, asExports,
 } from './utils';
 import {yellow} from 'chalk';
 
@@ -21,47 +20,48 @@ export async function compile(options: CompileOptions) {
     outputDirectory,
     display = 'default',
     removeDescription = false,
+    schemaPath,
+    operationsPath,
   } = options;
   const includeDescription = !removeDescription;
-  let schemaString: string = null;
-
-  if ('schemaPath' in options) {
-    schemaString = await getFileContent(options.schemaPath);
-  } else if ('schema' in options) {
-    schemaString = options.schema;
-  } else {
-    const {cwd, globs} = options.schemaGlobs;
-    schemaString = await getFileContent(await withCwdAndGlob(globs, cwd));
-  }
-
-  console.log(yellow('Starting compilation..'));
+  const schemaString = await getFileContent(schemaPath);
 
   if (schemaString.length === 0) {
     throw new Error('No schema definition was found');
   }
 
+  console.log(yellow('Starting compilation..'));
+
   // Firstly compile schema
-  const {schema} = compileSchema(
+  const {schema} = await compileSchema(
     schemaString, outputDirectory, includeDescription, display,
   );
 
   // Then, compile operations
-  let operationsString: string | null = null;
-  if ('operationsPath' in options) {
-    operationsString = await getFileContent(options.operationsPath);
-  } else if ('operations' in options) {
-    operationsString = options.operations;
-  } else if ('operationsGlobs' in options) {
-    const {cwd, globs} = options.operationsGlobs;
-    operationsString = await getFileContent(await withCwdAndGlob(globs, cwd));
-  }
+  const operationsString: string | null = operationsPath
+    ? await getFileContent(operationsPath)
+    : null;
+  let indexJsContent = `exports.schema = \`${schemaString}\`;\n`;
+  let indexTsContent = `declare const schema: string;\n`
+   + 'export default schema;\n';
 
   if (typeof operationsString === 'string') {
     if (operationsString.length === 0) {
       throw new Error('Unable to find operations');
     }
-    compileOperations(operationsString, outputDirectory, schema);
+    const {compiledTypes} =
+      await compileOperations(operationsString, outputDirectory, schema);
+
+    compiledTypes.forEach(({operationName, js}) => {
+      indexTsContent += `export * from './${operationName}';\n`
+        + `export { default as ${operationName} } from './${operationName}';\n`;
+      indexJsContent += asExports(operationName, js) + '\n';
+    });
   }
+
+  // Create and write index files
+  await write(indexTsContent, outputDirectory, 'index.d.ts');
+  await write(indexJsContent, outputDirectory, 'index.js');
 
   console.log(yellow('Compilation completed successfully!'));
 }
@@ -73,7 +73,7 @@ export async function compile(options: CompileOptions) {
  * @param {boolean} includeDescription
  * @param display
  */
-export function compileSchema(
+export async function compileSchema(
   schemaString: string,
   outputDirectory: string,
   includeDescription = false,
@@ -83,7 +83,7 @@ export function compileSchema(
   const schema = buildSchema(schemaString);
 
   // Sort types depending on display type
-  const types = Object.values(schema.getTypeMap()).sort(getSorter(display));
+  const types = schema.toConfig().types.sort(getSorter(display));
 
   let compiledTypes = types.reduce<string[]>((acc, type) => {
     // We parse only types used in schema. We can meet internal types. Internal
@@ -101,12 +101,10 @@ export function compileSchema(
     + `export default schema;`;
 
   // Write all the schema into a single file
-  write(wrapWithWarning(compiledTypes), outputDirectory, 'schema.d.ts');
-  write(wrapAsDefaultExport(schemaString), outputDirectory, 'schema.js');
+  await write(compiledTypes, outputDirectory, 'schema.d.ts');
+  await write(asModuleExports(schemaString), outputDirectory, 'schema.js');
 
-  return {
-    schema,
-  }
+  return {schema}
 }
 
 /**
@@ -115,11 +113,10 @@ export function compileSchema(
  * @param {string} outputDirectory
  * @param schema
  */
-export function compileOperations(
+export async function compileOperations(
   operationsString: string,
   outputDirectory: string,
   schema: GraphQLSchema,
-  // flattenOperations: boolean,
 ) {
   const documentNode = parse(operationsString);
   const compiledTypes = documentNode
@@ -128,27 +125,26 @@ export function compileOperations(
       if (node.kind === 'OperationDefinition') {
         const {name, operation, loc} = node;
         const operationText = operationsString.slice(loc.start, loc.end);
-        const ts = generateGQLOperation(parseOperation(node, schema));
+        const ts = generateGQLOperation(parseOperationDefinitionNode(node, schema));
 
         acc.push({
           operationName: name.value + toCamelCase(operation),
-          ts: wrapWithWarning(ts),
-          js: wrapAsDefaultExport(operationText),
+          ts,
+          js: operationText,
         });
       }
       return acc;
     }, []);
 
-  // Write all the operations into a single file
-  // if (flattenOperations) {
-  //   const contents = compiledTypes.map(c => c.compiledText).join('\n\n');
-  //   write(wrapWithWarning(contents), outputDirectory, 'operations.d.ts');
-  // }
-  // // Or create a new file for each query
-  // else {
-  compiledTypes.forEach(c => {
-    write(c.ts, outputDirectory, `${c.operationName}.d.ts`);
-    write(c.js, outputDirectory, `${c.operationName}.js`);
-  });
-  // }
+  await Promise.all(
+    compiledTypes.reduce<Promise<any>[]>((acc, {ts, operationName, js}) => {
+      acc.push(write(ts, outputDirectory, `${operationName}.d.ts`));
+      acc.push(write(asModuleExports(js), outputDirectory, `${operationName}.js`));
+      return acc;
+    }, []),
+  );
+
+  return {
+    compiledTypes,
+  };
 }

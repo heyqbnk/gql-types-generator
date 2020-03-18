@@ -27,18 +27,11 @@ yarn add gql-types-generator
 1. Command line interface;
 2. TypeScript / JavaScript code.
 
-> **Warning**
->
-> When using CLI, each glob will be formatted as process.cwd() + glob.
->
-> When using compile function directly through JS, it will not format any glob,
-> so make sure you passed correct globs
-
 ### Command line interface
 After installation of package is done, `gql-types-generator` command
 becomes available.
 
-```bash
+```
 Usage: gql-types-generator [options] <schema-globs>
 
 Options:
@@ -49,67 +42,109 @@ Options:
   -h, --help                 display help for command
 ```
 
+> **Warning**
+>
+> When using CLI, each glob will be formatted as process.cwd() + glob. You can
+> pass an array of globs using comma between them like 
+> `src/schema1.graphql,src/schema2.graphql`
+
 ### Programmatic control
-If needed, you can use `compile` function to generate types.
+Library provides such functions as `compile`, `compileSchema` and 
+`compileOperations` to generate types.
 
-#### Options
-[Current list of options](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compiler.ts)
+---
 
-#### Examples
-When schema is separated between 2 directories:
+#### `compile`
+##### List of available options
 
+| Name | Type | Description |
+|---|---|---|
+| `outputDirectory` | `string` | Full path to output directory |
+| `removeDescription` | `boolean?` | Should library remove descriptions |
+| `display` | `DisplayType?` | How to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema |
+| `schemaPath` | `PathType` | Defines paths to schema. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compiler.ts#L23-L26) for more |
+| `operationsPath` | `PathType?` | Defines paths to operations. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compiler.ts#L23-L26) for more |
+
+##### Example
 ```typescript
 import {compile} from 'gql-types-generator';
 import * as path from 'path';
 
 compile({
-  schemaPath: [
-    path.resolve(__dirname, 'schema-artifacts-folder-1/schema-part.graphql'),
-    path.resolve(__dirname, 'schema-artifacts-folder-2/schema-part.graphql')
-  ],
   outputDirectory:  path.resolve(__dirname, 'compiled'),
-});
-```
-
-When all the schema partials are in the only 1 directory:
-```typescript
-compile({
-  schemaPath: path.resolve(__dirname, 'schema-artifacts/schema.graphql'),
-  outputDirectory:  path.resolve(__dirname, 'compiled'),
-});
-```
-
-When you already have schema as text:
-
-```typescript
-compile({ 
-  schema: 'type Query { ... }',
-  outputDirectory:  path.resolve(__dirname, 'compiled'),
-});
-``` 
-
-When you want to sort schema types as they are placed in original GQL schema:
-```typescript
-compile({
-  schemaPath: path.resolve(__dirname, 'schema-artifacts/*.graphql'),
-  outputDirectory:  path.resolve(__dirname, 'compiled'),
-  sort: 'as-is'
-});
-```
-
-Getting schema partials with globs or glob
-```typescript
-compile({
-  schemaGlobs: {
-    cwd: process.cwd(),
-    globs: '/schema-artifacts/*.graphql',
-    // OR
-    globs: [
-      '/schema-artifacts-folder-1/*.graphql', 
-      '/schema-artifacts-folder-2/*.graphql'
-    ],
+  removeDescription: false,
+  display: 'as-is',
+  operationsPath: {
+    glob: {
+      cwd: process.cwd(),
+      glob: 'gql/operations/*.graphql'
+    }
   },
-  outputDirectory:  path.resolve(__dirname, 'compiled'),
-  sort: 'as-is'
+  schemaPath: {
+    path: [
+      path.resolve(__dirname, 'gql/schema/part1.graphql'),
+      path.resolve(__dirname, 'gql/schema/part2.graphql'),
+     ]
+  },
+  // Or pass schema glob
+  schemaPath: {
+    glob: {
+      cwd: process.cwd(),
+      glob: 'gql/schema/*.graphql'
+    }
+  },
+  // Or pass schema definition directly
+  schemaPath: {
+    definition: 'type Query { ... }'
+  }
 });
+```
+
+---
+
+#### `compileSchema(schemaString, outputDirectory, includeDescription?, display?)`
+##### List of available options
+
+| Name | Type | Description |
+|---|---|---|
+| `schemaString` | `string` | Schema definition |
+| `outputDirectory` | `string` | Full path to output directory |
+| `includeDescription` | `boolean?` | Should library include descriptions |
+| `display` | `DisplayType?` | How to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema |
+
+##### Example
+```typescript
+import {compileSchema} from 'gql-types-generator';
+import * as path from 'path';
+
+compileSchema(
+  'type Query { ... }',
+  path.resolve(__dirname, 'gql/compiled'),
+  true,
+  'default',
+);
+```
+
+---
+
+#### `compileOperations(schemaString, outputDirectory, includeDescription?, display?)`
+##### List of available options
+
+| Name | Type | Description |
+|---|---|---|
+| `operationsString` | `string` | Operations definition |
+| `outputDirectory` | `string` | Full path to output directory |
+| `schema` | `GraphQLSchema` | Built GQL schema |
+
+##### Example
+```typescript
+import {compileOperations} from 'gql-types-generator';
+import * as path from 'path';
+
+compileOperations(
+  'query getUser() { ... } mutation register() { ... }',
+  path.resolve(__dirname, 'gql/compiled'),
+  // We can get this value via compileSchema
+  gqlSchema,
+);
 ```

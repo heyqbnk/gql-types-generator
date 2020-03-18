@@ -5,18 +5,8 @@ import {withCwd} from './fs';
 
 const program = new Command('gql-types-generator');
 
-function parseDisplayType(value: string) {
-  const displays = ['as-is', 'default'];
-
-  if (!displays.includes(value)) {
-    throw new Error('Unknown display type');
-  }
-  return value;
-}
-
 program
   .option('--operations <globs>', 'globs to find queries and mutations')
-  // .option('--flatten-operations', 'states if operations should be placed in a single file')
   .option('--remove-description', 'states if description should be removed')
   .option(
     '--display <sort>',
@@ -24,7 +14,7 @@ program
     '"default". By default, generator compiles scalars first, then enums, ' +
     'interfaces, inputs, unions and then types. "as-is" places types as they ' +
     'are placed in schema',
-    parseDisplayType,
+    /(as-is)|(default)/,
   )
   .requiredOption(
     '--output-directory <path>',
@@ -32,23 +22,20 @@ program
   )
   .arguments('<schema-globs>')
   .action(async schemaPath => {
-    const {
-      operations,
-      // flattenOperations,
-      removeDescription, display,
-      outputDirectory,
-    } = program;
+    const {operations, removeDescription, display, outputDirectory} = program;
+    const operationsGlobs = operations ? {
+      cwd: process.cwd(),
+      globs: operations.split(','),
+    } : null;
+    const schemaGlobs = {
+      cwd: process.cwd(),
+      globs: schemaPath.split(','),
+    };
 
     await compile({
-      operationsGlobs: operations ? {
-        cwd: process.cwd(),
-        globs: operations.split(','),
-      } : null,
+      operationsPath: {glob: operationsGlobs},
       removeDescription,
-      schemaGlobs: {
-        cwd: process.cwd(),
-        globs: schemaPath.split(','),
-      },
+      schemaPath: {glob: schemaGlobs},
       display,
       outputDirectory: withCwd(outputDirectory),
     });

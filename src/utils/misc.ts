@@ -47,8 +47,8 @@ const gqlScalarTypes = Object.keys(gqlScalarTypesMap) as GQLScalarType[];
  * @param value
  * @returns {value is GQLScalarType}
  */
-export function isGQLScalarType(value: any): value is GQLScalarType {
-  return gqlScalarTypes.includes(value);
+export function isGQLScalarType(value: string): value is GQLScalarType {
+  return gqlScalarTypes.includes(value as any);
 }
 
 /**
@@ -97,7 +97,7 @@ export function getTypeNodeDefinition(
         }
       } else {
         const {
-          requiredTypes: _requiredTypes, definition: _definition
+          requiredTypes: _requiredTypes, definition: _definition,
         } = getTypeNodeDefinition(node.type, requiredTypes, true);
 
         _requiredTypes.forEach(t => {
@@ -147,18 +147,26 @@ export function getOutputTypeDefinition(
 }
 
 /**
- * Wraps text with warning that types should not be edited due to they are
- * compiled
- * @param {string} types
+ * Returns met list and non-nullable wrappers
+ * @param {GraphQLOutputType} type
+ * @param definition
+ * @param nullable
  * @returns {string}
  */
-export function wrapWithWarning(types: string): string {
-  const line = '// ' + new Array(20).fill('=').join('') + '\n';
-  return line
-    + '// THESE TYPES ARE COMPILED VIA GQL-TYPES-GENERATOR AND SHOULD NOT BE\n' +
-    '// EDITED DIRECTLY\n'
-    + line
-    + types;
+export function getOutputTypeDefinitionWithWrappers(
+  type: GraphQLOutputType,
+  definition: string,
+  nullable = true,
+): string {
+  if (isNonNullType(type)) {
+    return getOutputTypeDefinitionWithWrappers(type.ofType, definition, false);
+  }
+  let def = definition;
+
+  if (isListType(type)) {
+    def = `Array<${def}>`;
+  }
+  return nullable ? makeNullable(def) : def;
 }
 
 /**
@@ -298,19 +306,20 @@ export function formatRequiredTypes(types: string[]) {
 }
 
 /**
- * Returns array with unique values
- * @param {T[]} arr
- * @returns {T[]}
- */
-export function uniqueArray<T>(arr: T[]): T[] {
-  return arr.filter((elem, idx) => arr.indexOf(elem, idx + 1) === -1);
-}
-
-/**
  * Wraps with module.exports
  * @param {string} text
  * @returns {string}
  */
-export function wrapAsDefaultExport(text: string): string {
+export function asModuleExports(text: string): string {
   return `module.exports = \`${text}\`;`;
+}
+
+/**
+ * Wraps with exports
+ * @param name
+ * @param {string} text
+ * @returns {string}
+ */
+export function asExports(name: string, text: string): string {
+  return `exports.${name} = \`${text}\`;`;
 }

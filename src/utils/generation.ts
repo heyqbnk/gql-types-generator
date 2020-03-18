@@ -97,9 +97,10 @@ export function generateGQLScalar(parsedType: ParsedGQLScalarType): string {
  * @returns {string}
  */
 export function generateGQLUnion(parsedType: ParsedGQLUnionType): string {
-  const {description, name, types} = parsedType;
+  const {description, name, types, requiredTypes} = parsedType;
 
-  return formatDescription(description)
+  return formatRequiredTypes(requiredTypes)
+    + formatDescription(description)
     + `export declare type ${name} = ${types.join(' | ')};`;
 }
 
@@ -108,18 +109,19 @@ export function generateGQLUnion(parsedType: ParsedGQLUnionType): string {
  * @returns {string}
  * @param parsedType
  */
-export function generateGQLOperation(
-  parsedType: ParsedGQLOperation,
-): string {
+export function generateGQLOperation(parsedType: ParsedGQLOperation): string {
   const {
     originalName, operationType, operationDefinition, variables, requiredTypes,
   } = parsedType;
   const operationName = getCompiledOperationName(originalName, operationType);
   const operationStringName = originalName + toCamelCase(operationType);
+  const variablesDefinition = variables.fields.length === 0
+    ? ''
+    : (generateGQLInterface(variables, true) + '\n\n');
 
   return formatRequiredTypes(requiredTypes)
     + `export declare interface ${operationName} ${operationDefinition}\n\n`
-    + generateGQLInterface(variables, true) + '\n\n'
+    + variablesDefinition
     + `declare const ${operationStringName}: string;\n`
     + `export default ${operationStringName};`;
 }

@@ -49,6 +49,7 @@ export interface ParsedGQLScalarType extends ParsedGQLTypeBase {
  */
 export interface ParsedGQLUnionType extends ParsedGQLTypeBase {
   types: CompiledTypeName[];
+  requiredTypes: string[];
 }
 
 /**

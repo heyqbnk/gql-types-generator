@@ -145,7 +145,7 @@ type Query {
   "Возвращает последние даты которые есть в БД"
   ratingDays(count: Int): [Int!]!
   "Возвращает первую страницу рейтинга и положение в ней текущего пользователя"
-  RatingDay(day: Int!): RatingDay!
+  RatingDay(day: Int!): RatingDay
   "Возвращает определенную страницу дня рейтинга"
   ratingDayPage(input: RatingPageInput!): [RatingUser!]!
   "Возвращает профиль пользователя"

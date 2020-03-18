@@ -2,6 +2,7 @@ import glob from 'glob';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as shell from 'shelljs';
+import {PathType} from './types';
 
 /**
  * Adds current working directory to path
@@ -23,7 +24,7 @@ export function withCwd(path: string, cwd = process.cwd()): string {
  */
 export async function withCwdAndGlob(
   globs: string | string[],
-  cwd = process.cwd()
+  cwd = process.cwd(),
 ): Promise<string[]> {
   const formattedGlobs = Array.isArray(globs) ? globs : [globs];
   const patterns = formattedGlobs.map(g => withCwd(g, cwd));
@@ -53,7 +54,7 @@ export async function withCwdAndGlob(
  * @returns {Promise<string>}
  * @param path
  */
-export async function getFileContent(path: string | string[]): Promise<string> {
+export async function getFileContentByPath(path: string | string[]): Promise<string> {
   const paths = Array.isArray(path) ? path : [path];
   const contents = await Promise.all(
     paths.map(p => {
@@ -80,4 +81,19 @@ export async function getFileContent(path: string | string[]): Promise<string> {
 export async function write(content: string, directory: string, fileName: string) {
   await shell.mkdir('-p', directory);
   return fs.writeFileSync(path.resolve(directory, fileName), content);
+}
+
+/**
+ * Returns file content(s) by compilation path
+ * @returns {Promise<string>}
+ * @param pathType
+ */
+export async function getFileContent(pathType: PathType): Promise<string> {
+  if ('path' in pathType) {
+    return await getFileContentByPath(pathType.path);
+  } else if ('definition' in pathType) {
+    return pathType.definition;
+  }
+  const {cwd, globs} = pathType.glob;
+  return  await getFileContentByPath(await withCwdAndGlob(globs, cwd));
 }
