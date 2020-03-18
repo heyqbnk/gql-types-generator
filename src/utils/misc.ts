@@ -1,9 +1,12 @@
 import {
-  CompiledTypeName,
-  GQLScalarCompiledTypesMap,
-  GQLInternalTypeName,
+  CompiledTypeName, GQLScalarCompiledTypesMap, GQLScalarType, DisplayType,
+  GraphQLNonWrappedType, DefinitionWithRequiredTypes,
 } from '../types';
-import {TypeNode} from 'graphql';
+import {
+  GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLSchema,
+  isEnumType, isInterfaceType, isListType, isNonNullType, isObjectType,
+  isScalarType, isUnionType, isWrappingType, OperationTypeNode, TypeNode,
+} from 'graphql';
 
 /**
  * Returns formatted TS description
@@ -11,7 +14,7 @@ import {TypeNode} from 'graphql';
  * @param {number} spacesCount
  * @returns {string}
  */
-export function getDescription(
+export function formatDescription(
   description: string | null,
   spacesCount: number = 0,
 ): string {
@@ -35,21 +38,21 @@ const gqlScalarTypesMap: GQLScalarCompiledTypesMap = {
 
 /**
  * List of GQL scalar types
- * @type {GQLInternalTypeName[]}
+ * @type {GQLScalarType[]}
  */
-const gqlScalarTypes = Object.keys(gqlScalarTypesMap) as GQLInternalTypeName[];
+const gqlScalarTypes = Object.keys(gqlScalarTypesMap) as GQLScalarType[];
 
 /**
  * States if value is GQL scalar type
  * @param value
  * @returns {value is GQLScalarType}
  */
-export function isGQLScalarType(value: any): value is GQLInternalTypeName {
+export function isGQLScalarType(value: any): value is GQLScalarType {
   return gqlScalarTypes.includes(value);
 }
 
 /**
- *
+ * Converts GQL type name to TS type name. Keeps custom compiled names
  * @param {string} value
  * @returns {string}
  */
@@ -69,33 +72,82 @@ export function makeNullable(type: string): string {
 /**
  * Recursively gets type definition getting deeper into types tree
  * @param {TypeNode} node
+ * @param requiredTypes
  * @param {boolean} nullable
  * @returns {string}
  */
-export function getTypeDefinition(node: TypeNode, nullable = true): string {
+export function getTypeNodeDefinition(
+  node: TypeNode,
+  requiredTypes: string[] = [],
+  nullable = true,
+): DefinitionWithRequiredTypes {
   switch (node.kind) {
     case 'NonNullType':
-      return getTypeDefinition(node.type, false);
+      return getTypeNodeDefinition(node.type, requiredTypes, false);
     case 'NamedType':
     case 'ListType':
       let definition = '';
 
       if (node.kind === 'NamedType') {
-        definition = transpileGQLTypeName(node.name.value);
+        const name = node.name.value;
+        definition = transpileGQLTypeName(name);
+
+        if (!isGQLScalarType(name) && !requiredTypes.includes(name)) {
+          requiredTypes.push(name);
+        }
       } else {
-        definition = `Array<${getTypeDefinition(node.type, true)}>`;
+        const {
+          requiredTypes: _requiredTypes, definition: _definition
+        } = getTypeNodeDefinition(node.type, requiredTypes, true);
+
+        _requiredTypes.forEach(t => {
+          if (!isGQLScalarType(t) && !requiredTypes.includes(t)) {
+            requiredTypes.push(t);
+          }
+        });
+        definition = `Array<${_definition}>`;
       }
 
       if (nullable) {
         definition = makeNullable(definition);
       }
 
-      return definition;
+      return {definition, requiredTypes};
   }
 }
 
 /**
- * Wraps schema with warning that types should be edited due to they are
+ * Recursively gets type definition getting deeper into types tree
+ * @param {GraphQLOutputType} type
+ * @param {boolean} nullable
+ * @returns {string}
+ */
+export function getOutputTypeDefinition(
+  type: GraphQLOutputType,
+  nullable = true,
+): string {
+  if (isNonNullType(type)) {
+    return getOutputTypeDefinition(type.ofType, false);
+  }
+  let definition = '';
+  if (isListType(type)) {
+    definition = `Array<${getOutputTypeDefinition(type.ofType)}>`;
+  } else if (isScalarType(type)) {
+    definition = transpileGQLTypeName(type.name);
+  } else if (
+    isObjectType(type)
+    || isInterfaceType(type)
+    || isEnumType(type)
+  ) {
+    definition = type.name;
+  } else if (isUnionType(type)) {
+    definition = type.getTypes().map(t => t.name).join(' | ');
+  }
+  return nullable ? makeNullable(definition) : definition;
+}
+
+/**
+ * Wraps text with warning that types should not be edited due to they are
  * compiled
  * @param {string} types
  * @returns {string}
@@ -104,7 +156,152 @@ export function wrapWithWarning(types: string): string {
   const line = '// ' + new Array(20).fill('=').join('') + '\n';
   return line
     + '// THESE TYPES ARE COMPILED VIA GQL-TYPES-GENERATOR AND SHOULD NOT BE\n' +
-    '// DIRECTLY EDITED\n'
+    '// EDITED DIRECTLY\n'
     + line
     + types;
+}
+
+/**
+ * Returns sorter depending on display type
+ * @param {DisplayType} display
+ * @returns {(a: GraphQLNamedType, b: GraphQLNamedType) => (number | number)}
+ */
+export function getSorter(display: DisplayType) {
+  const weights = {
+    ScalarTypeDefinition: 0,
+    EnumTypeDefinition: 1,
+    InterfaceTypeDefinition: 2,
+    InputObjectTypeDefinition: 3,
+    UnionTypeDefinition: 4,
+    ObjectTypeDefinition: 5,
+  };
+
+  return (a: GraphQLNamedType, b: GraphQLNamedType) => {
+    if (a.astNode || b.astNode) {
+      if (!a.astNode) {
+        return -1;
+      }
+      if (!b.astNode) {
+        return 1;
+      }
+      return display === 'as-is'
+        ? a.astNode.loc.start - b.astNode.loc.start
+        : weights[a.astNode.kind] - weights[b.astNode.kind];
+    }
+    return 0;
+  }
+}
+
+/**
+ * Converts text to camel case
+ * @param {string} text
+ * @returns {string}
+ */
+export function toCamelCase(text: string): string {
+  const cleared = text.replace(/[^\da-z].?/gi, match => {
+    return match[1] ? match[1].toUpperCase() : '';
+  });
+  return cleared[0].toUpperCase() + cleared.slice(1);
+}
+
+/**
+ * Returns compiled operation name
+ * @param {string} name
+ * @param {string} operation
+ * @returns {string}
+ */
+export function getCompiledOperationName(
+  name: string,
+  operation: string,
+): string {
+  return toCamelCase(name) + toCamelCase(operation);
+}
+
+/**
+ * Returns operation root node depending on operation type
+ * @param {GraphQLSchema} schema
+ * @param {OperationTypeNode} operation
+ * @returns {GraphQLObjectType}
+ */
+export function getOperationRootNode(
+  schema: GraphQLSchema,
+  operation: OperationTypeNode,
+): GraphQLObjectType {
+  if (operation === 'query') {
+    return schema.getQueryType();
+  } else if (operation === 'mutation') {
+    return schema.getMutationType();
+  }
+  return schema.getSubscriptionType();
+}
+
+/**
+ * Returns first met non wrapping GQL type
+ * @param {GraphQLOutputType} type
+ * @returns {GraphQLNonWrappedType}
+ */
+export function getFirstNonWrappingType(
+  type: GraphQLOutputType,
+): GraphQLNonWrappedType {
+  return isWrappingType(type) ? getFirstNonWrappingType(type.ofType) : type;
+}
+
+/**
+ * Gets field type depending on passed path
+ * @param rootNode
+ * @param {string} path
+ * @returns {CompiledTypeName}
+ */
+export function getIn(rootNode: GraphQLObjectType, path: string): GraphQLOutputType {
+  const [firstPartial, ...restPartials] = path.split('.');
+  const config = rootNode.toConfig();
+  let ref = config.fields[firstPartial].type;
+
+  if (!ref) {
+    throw new Error(`Unable to find path ${path}`);
+  }
+  if (restPartials.length === 0) {
+    return ref;
+  }
+
+  for (let i = 0; i < restPartials.length; i++) {
+    const partial = restPartials[i];
+
+    // Avoid lists and non nulls. We dont care about them
+    ref = getFirstNonWrappingType(ref);
+
+    if (!isObjectType(ref) && !isInterfaceType(ref)) {
+      throw new Error(`Unable to find path ${path}`);
+    }
+    ref = ref.getFields()[partial].type;
+
+    if (!ref) {
+      throw new Error(`Unable to find path ${path}`);
+    }
+
+    // It this partial is the last in path, we have to return type of field
+    if (i === restPartials.length - 1) {
+      return ref;
+    }
+  }
+}
+
+/**
+ * Formats imports for custom types
+ * @param {string[]} types
+ * @returns {string}
+ */
+export function formatRequiredTypes(types: string[]) {
+  return types.length === 0
+    ? ''
+    : `import { ${types.join(', ')} } from './schema';\n\n`;
+}
+
+/**
+ * Returns array with unique values
+ * @param {T[]} arr
+ * @returns {T[]}
+ */
+export function uniqueArray<T>(arr: T[]): T[] {
+  return arr.filter((elem, idx) => arr.indexOf(elem, idx + 1) === -1);
 }

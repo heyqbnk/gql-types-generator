@@ -1,5 +1,5 @@
 export * from './cli';
-export * from './compile';
+export * from './compiler';
 export * from './fs';
 export * from './types';
 export * from './utils';

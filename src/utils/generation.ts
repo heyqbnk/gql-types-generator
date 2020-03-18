@@ -1,12 +1,35 @@
 import {
-  ParsedGQLEnumType,
-  ParsedGQLScalarType,
+  DefinitionWithRequiredTypes,
+  ParsedGQLEnumType, ParsedGQLOperation,
+  ParsedGQLScalarType, ParsedGQLType,
   ParsedGQLTypeOrInterface, ParsedGQLUnionType,
 } from '../types';
-import {getDescription} from './misc';
+import {
+  formatRequiredTypes,
+  getCompiledOperationName,
+  formatDescription,
+} from './misc';
 
 /**
- * Converts GQL's interface or type to TS
+ * Universal TS definition generator
+ * @param {ParsedGQLType} parsedType
+ * @returns {string}
+ */
+export function generateTSTypeDefinition(parsedType: ParsedGQLType): string {
+  if ('values' in parsedType) {
+    return generateGQLEnum(parsedType);
+  }
+  if ('types' in parsedType) {
+    return generateGQLUnion(parsedType);
+  }
+  if ('fields' in parsedType) {
+    return generateGQLInterface(parsedType);
+  }
+  return generateGQLScalar(parsedType);
+}
+
+/**
+ * GQL interface or type => TS interface
  * @param {ParsedGQLTypeOrInterface} parsedType
  * @returns {string}
  */
@@ -14,58 +37,82 @@ export function generateGQLInterface(
   parsedType: ParsedGQLTypeOrInterface,
 ): string {
   const {name, description, fields} = parsedType;
+  const {definition, requiredTypes} = fields.reduce<DefinitionWithRequiredTypes>((acc, f) => {
+    const {definition, description, name, requiredTypes} = f;
+    const fullDefinition = formatDescription(description, 2)
+      + `  ${name}: ${definition};\n`;
 
-  return getDescription(description)
-    + `export declare interface ${name} {\n`
-    + fields.reduce<string>((acc, f) => {
-      const {definition, description, name} = f;
+    acc.definition += fullDefinition;
 
-      return acc
-        + getDescription(description, 2)
-        + `  ${name}: ${definition};\n`;
-    }, '')
-    + '}'
+    for (const type of requiredTypes) {
+      if (!acc.requiredTypes.includes(type)) {
+        acc.requiredTypes.push(type);
+      }
+    }
+    return acc;
+  }, {definition: '\n', requiredTypes: []});
+
+  return formatRequiredTypes(requiredTypes)
+    + formatDescription(description)
+    + `export declare interface ${name} {${definition}}`
 }
 
 /**
- * Converts GQL's enum to TS
+ * GQL enum => TS enum
  * @param {ParsedGQLEnumType} parsedType
  * @returns {string}
  */
 export function generateGQLEnum(parsedType: ParsedGQLEnumType): string {
   const {name, description, values} = parsedType;
+  const content = values.reduce<string>((acc, v) => {
+    const {description, value} = v;
 
-  return getDescription(description)
-    + `export declare enum ${name} {\n`
-    + values.reduce<string>((acc, v) => {
-      const {description, value} = v;
+    return acc
+      + formatDescription(description, 2)
+      + `  ${value} = "${value}",\n`;
+  }, '\n');
 
-      return acc
-        + getDescription(description, 2)
-        + `  ${value} = "${value}",\n`;
-    }, '')
-    + '}'
+  return formatDescription(description)
+    + `export declare enum ${name} {${content}}`;
 }
 
 /**
- * Converts GQL's scalar to TS
+ * GQL scalar => TS type
  * @param {ParsedGQLScalarType} parsedType
  * @returns {string}
  */
 export function generateGQLScalar(parsedType: ParsedGQLScalarType): string {
   const {description, name} = parsedType;
 
-  return getDescription(description) + `export declare type ${name} = any;`
+  return formatDescription(description) + `export declare type ${name} = any;`
 }
 
 /**
- * Converts GQL's union to TS
+ * GQL union => TS type
  * @param {ParsedGQLUnionType} parsedType
  * @returns {string}
  */
 export function generateGQLUnion(parsedType: ParsedGQLUnionType): string {
-  const {description, name, definition} = parsedType;
+  const {description, name, types} = parsedType;
 
-  return getDescription(description)
-    + `export declare type ${name} = ${definition};`;
+  return formatDescription(description)
+    + `export declare type ${name} = ${types.join(' | ')};`;
+}
+
+/**
+ * GQL operation => TS interfaces
+ * @returns {string}
+ * @param parsedType
+ */
+export function generateGQLOperation(
+  parsedType: ParsedGQLOperation,
+): string {
+  const {
+    originalName, operationType, operationDefinition, variables, requiredTypes,
+  } = parsedType;
+  const operationName = getCompiledOperationName(originalName, operationType);
+
+  return formatRequiredTypes(requiredTypes)
+    + `export declare interface ${operationName} ${operationDefinition}\n\n`
+    + generateGQLInterface(variables);
 }
