@@ -11,10 +11,10 @@ export interface CompileOptionsShared {
    * Globs to operations
    */
   operationsPath?: string | string[];
-  /**
-   * States if all operations should be
-   */
-  flattenOperations?: boolean;
+  // /**
+  //  * States if all operations should be placed in one file
+  //  */
+  // flattenOperations?: boolean;
   /**
    * Full path to output directory
    */
@@ -59,5 +59,6 @@ export type CompileOptions = CompileFileOptions | CompileTextOptions;
  */
 export interface CompiledOperation {
   operationName: string;
-  compiledText: string;
+  js: string;
+  ts: string;
 }

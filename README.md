@@ -43,7 +43,6 @@ Usage: gql-types-generator [options] <schema-globs>
 
 Options:
   --operations <globs>       globs to find queries and mutations
-  --flatten-operations       states if operations should be placed in a single file
   --remove-description       states if description should be removed
   --display <sort>           how to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema
   --output-directory <path>  path to directory where typings will be saved

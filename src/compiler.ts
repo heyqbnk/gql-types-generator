@@ -7,7 +7,7 @@ import {
   generateTSTypeDefinition,
   getSorter,
   wrapWithWarning,
-  getCompiledOperationName, parseOperation,
+  parseOperation, toCamelCase,
 } from './utils';
 import {yellow} from 'chalk';
 
@@ -19,7 +19,7 @@ import {yellow} from 'chalk';
 export async function compile(options: CompileOptions) {
   const {
     operationsPath,
-    flattenOperations = false,
+    // flattenOperations = false,
     outputDirectory,
     display = 'default',
     removeDescription = false,
@@ -35,7 +35,7 @@ export async function compile(options: CompileOptions) {
 
   console.log(yellow('Starting compilation with options:'), {
     operationsPath,
-    flattenOperations,
+    // flattenOperations,
     outputDirectory,
     display,
     removeDescription,
@@ -61,7 +61,8 @@ export async function compile(options: CompileOptions) {
       );
     }
     compileOperations(
-      operationsString, outputDirectory, schema, flattenOperations,
+      operationsString, outputDirectory, schema,
+      // flattenOperations,
     );
   }
 
@@ -118,37 +119,37 @@ export function compileOperations(
   operationsString: string,
   outputDirectory: string,
   schema: GraphQLSchema,
-  flattenOperations: boolean,
+  // flattenOperations: boolean,
 ) {
   const documentNode = parse(operationsString);
   const compiledTypes = documentNode
     .definitions
     .reduce<CompiledOperation[]>((acc, node) => {
       if (node.kind === 'OperationDefinition') {
-        const {name, operation} = node;
-        const compiledText = generateGQLOperation(parseOperation(node, schema));
+        const {name, operation, loc} = node;
+        const operationText = operationsString.slice(loc.start, loc.end);
+        const ts = generateGQLOperation(parseOperation(node, schema));
+        const js = `module.exports = \`${operationText}\`;`;
 
         acc.push({
-          operationName: getCompiledOperationName(name.value, operation),
-          compiledText,
+          operationName: name.value + toCamelCase(operation),
+          ts,
+          js,
         });
       }
       return acc;
     }, []);
 
   // Write all the operations into a single file
-  if (flattenOperations) {
-    const contents = compiledTypes.map(c => c.compiledText).join('\n\n');
-    write(outputDirectory, 'operations.d.ts', wrapWithWarning(contents));
-  }
-  // Or create a new file for each query
-  else {
-    compiledTypes.forEach(c => {
-      write(
-        wrapWithWarning(c.compiledText),
-        outputDirectory,
-        `${c.operationName}.d.ts`,
-      );
-    });
-  }
+  // if (flattenOperations) {
+  //   const contents = compiledTypes.map(c => c.compiledText).join('\n\n');
+  //   write(wrapWithWarning(contents), outputDirectory, 'operations.d.ts');
+  // }
+  // // Or create a new file for each query
+  // else {
+  compiledTypes.forEach(c => {
+    write(wrapWithWarning(c.ts), outputDirectory, `${c.operationName}.d.ts`);
+    write(wrapWithWarning(c.js), outputDirectory, `${c.operationName}.js`);
+  });
+  // }
 }

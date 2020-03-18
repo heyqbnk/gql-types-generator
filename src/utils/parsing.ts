@@ -267,6 +267,7 @@ export function parseOperation(
     originalName,
     operationType: operation,
     operationDefinition: definition,
+    // operationContent: node.
     requiredTypes: typesToImport,
     variables,
   };

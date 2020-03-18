@@ -1,8 +1,8 @@
 {
   "name": "gql-types-generator",
-  "version": "1.2.2",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "version": "1.2.3",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": "https://github.com/wolframdeus/gql-types-generator.git",
   "author": "wolframdeus <wolframdeus@gmail.com>",
   "keywords": [

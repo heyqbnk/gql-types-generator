@@ -7,7 +7,7 @@ import {
 import {
   formatRequiredTypes,
   getCompiledOperationName,
-  formatDescription,
+  formatDescription, toCamelCase,
 } from './misc';
 
 /**
@@ -111,8 +111,11 @@ export function generateGQLOperation(
     originalName, operationType, operationDefinition, variables, requiredTypes,
   } = parsedType;
   const operationName = getCompiledOperationName(originalName, operationType);
+  const operationStringName = originalName + toCamelCase(operationType);
 
   return formatRequiredTypes(requiredTypes)
     + `export declare interface ${operationName} ${operationDefinition}\n\n`
-    + generateGQLInterface(variables);
+    + generateGQLInterface(variables) + '\n\n'
+    + `declare const ${operationStringName}: string;\n`
+    + `export default ${operationStringName};`;
 }

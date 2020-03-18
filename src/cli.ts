@@ -17,7 +17,7 @@ function parseDisplayType(value: string) {
 
 program
   .option('--operations <globs>', 'globs to find queries and mutations')
-  .option('--flatten-operations', 'states if operations should be placed in a single file')
+  // .option('--flatten-operations', 'states if operations should be placed in a single file')
   .option('--remove-description', 'states if description should be removed')
   .option(
     '--display <sort>',
@@ -34,14 +34,16 @@ program
   .arguments('<schema-globs>')
   .action(async schemaPath => {
     const {
-      operations, flattenOperations, removeDescription, display,
+      operations,
+      // flattenOperations,
+      removeDescription, display,
       outputDirectory,
     } = program;
 
     await compile({
       operationsPath: operations
         ? await withCwdAndGlob(operations) : null,
-      flattenOperations,
+      // flattenOperations,
       removeDescription,
       schemaPath: await withCwdAndGlob(schemaPath),
       display,
