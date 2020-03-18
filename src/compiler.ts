@@ -85,7 +85,7 @@ export function compileSchema(
   // Sort types depending on display type
   const types = Object.values(schema.getTypeMap()).sort(getSorter(display));
 
-  const compiledTypes = types.reduce<string[]>((acc, type) => {
+  let compiledTypes = types.reduce<string[]>((acc, type) => {
     // We parse only types used in schema. We can meet internal types. Internal
     // types dont have astNode
     if (type.astNode !== undefined) {
@@ -96,6 +96,9 @@ export function compileSchema(
 
     return acc;
   }, []).join('\n\n');
+
+  compiledTypes += '\n\ndeclare const schema: string;\n'
+    + `export default schema;`;
 
   // Write all the schema into a single file
   write(wrapWithWarning(compiledTypes), outputDirectory, 'schema.d.ts');
