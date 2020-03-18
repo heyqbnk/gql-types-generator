@@ -31,10 +31,12 @@ export function generateTSTypeDefinition(parsedType: ParsedGQLType): string {
 /**
  * GQL interface or type => TS interface
  * @param {ParsedGQLTypeOrInterface} parsedType
+ * @param importsRequired
  * @returns {string}
  */
 export function generateGQLInterface(
   parsedType: ParsedGQLTypeOrInterface,
+  importsRequired = false,
 ): string {
   const {name, description, fields} = parsedType;
   const {definition, requiredTypes} = fields.reduce<DefinitionWithRequiredTypes>((acc, f) => {
@@ -44,9 +46,11 @@ export function generateGQLInterface(
 
     acc.definition += fullDefinition;
 
-    for (const type of requiredTypes) {
-      if (!acc.requiredTypes.includes(type)) {
-        acc.requiredTypes.push(type);
+    if (importsRequired) {
+      for (const type of requiredTypes) {
+        if (!acc.requiredTypes.includes(type)) {
+          acc.requiredTypes.push(type);
+        }
       }
     }
     return acc;
@@ -115,7 +119,7 @@ export function generateGQLOperation(
 
   return formatRequiredTypes(requiredTypes)
     + `export declare interface ${operationName} ${operationDefinition}\n\n`
-    + generateGQLInterface(variables) + '\n\n'
+    + generateGQLInterface(variables, true) + '\n\n'
     + `declare const ${operationStringName}: string;\n`
     + `export default ${operationStringName};`;
 }
