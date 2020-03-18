@@ -7,7 +7,7 @@ import {
   generateTSTypeDefinition,
   getSorter,
   wrapWithWarning,
-  parseOperation, toCamelCase,
+  parseOperation, toCamelCase, wrapAsDefaultExport,
 } from './utils';
 import {yellow} from 'chalk';
 
@@ -60,10 +60,7 @@ export async function compile(options: CompileOptions) {
         'Unable to find operations with glob(s): ' + operationsPath,
       );
     }
-    compileOperations(
-      operationsString, outputDirectory, schema,
-      // flattenOperations,
-    );
+    compileOperations(operationsString, outputDirectory, schema);
   }
 
   console.log(yellow('Compilation completed successfully!'));
@@ -102,6 +99,7 @@ export function compileSchema(
 
   // Write all the schema into a single file
   write(wrapWithWarning(compiledTypes), outputDirectory, 'schema.d.ts');
+  write(wrapAsDefaultExport(schemaString), outputDirectory, 'schema.js');
 
   return {
     schema,
@@ -113,7 +111,6 @@ export function compileSchema(
  * @param {string} operationsString
  * @param {string} outputDirectory
  * @param schema
- * @param {boolean} flattenOperations
  */
 export function compileOperations(
   operationsString: string,
@@ -133,8 +130,8 @@ export function compileOperations(
 
         acc.push({
           operationName: name.value + toCamelCase(operation),
-          ts,
-          js,
+          ts: wrapWithWarning(ts),
+          js: wrapAsDefaultExport(js),
         });
       }
       return acc;
@@ -148,8 +145,8 @@ export function compileOperations(
   // // Or create a new file for each query
   // else {
   compiledTypes.forEach(c => {
-    write(wrapWithWarning(c.ts), outputDirectory, `${c.operationName}.d.ts`);
-    write(wrapWithWarning(c.js), outputDirectory, `${c.operationName}.js`);
+    write(c.ts, outputDirectory, `${c.operationName}.d.ts`);
+    write(c.js, outputDirectory, `${c.operationName}.js`);
   });
   // }
 }

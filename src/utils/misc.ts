@@ -305,3 +305,12 @@ export function formatRequiredTypes(types: string[]) {
 export function uniqueArray<T>(arr: T[]): T[] {
   return arr.filter((elem, idx) => arr.indexOf(elem, idx + 1) === -1);
 }
+
+/**
+ * Wraps with module.exports
+ * @param {string} text
+ * @returns {string}
+ */
+export function wrapAsDefaultExport(text: string): string {
+  return `module.exports = \`${text}\`;`;
+}
