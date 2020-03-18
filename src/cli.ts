@@ -42,7 +42,7 @@ program
 
     await compile({
       operationsPath: operations
-        ? await withCwdAndGlob(operations) : null,
+        ? await withCwdAndGlob(operations.split(',')) : null,
       // flattenOperations,
       removeDescription,
       schemaPath: await withCwdAndGlob(schemaPath),

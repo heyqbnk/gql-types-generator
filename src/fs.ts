@@ -3,14 +3,13 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as shell from 'shelljs';
 
-const cwd = process.cwd();
-
 /**
  * Adds current working directory to path
  * @param {string} path
+ * @param cwd
  * @returns {string}
  */
-export function withCwd(path: string): string {
+export function withCwd(path: string, cwd = process.cwd()): string {
   return path.startsWith('/')
     ? cwd + path
     : cwd + '/' + path;
@@ -18,11 +17,16 @@ export function withCwd(path: string): string {
 
 /**
  * Returns paths to files which compares passed pattern
- * @param {string} pattern
  * @returns {Promise<string[]>}
+ * @param globs
+ * @param cwd
  */
-export async function withCwdAndGlob(pattern: string): Promise<string[]> {
-  const patterns = pattern.split(',').map(withCwd);
+export async function withCwdAndGlob(
+  globs: string | string[],
+  cwd = process.cwd()
+): Promise<string[]> {
+  const formattedGlobs = Array.isArray(globs) ? globs : [globs];
+  const patterns = formattedGlobs.map(g => withCwd(g, cwd));
 
   const matches = await Promise.all(
     patterns.map(p => new Promise((res, rej) => {
@@ -64,7 +68,7 @@ export async function getFileContent(path: string | string[]): Promise<string> {
     }),
   );
 
-  return contents.reduce((acc, c) => acc + c);
+  return contents.reduce((acc, c) => acc + c, '');
 }
 
 /**

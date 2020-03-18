@@ -64,8 +64,8 @@ import * as path from 'path';
 
 compile({
   schemaPath: [
-    path.resolve(__dirname, 'schema-artifacts-folder-1/*.graphql'),
-    path.resolve(__dirname, 'schema-artifacts-folder-2/*.graphql')
+    path.resolve(__dirname, 'schema-artifacts-folder-1/schema-part.graphql'),
+    path.resolve(__dirname, 'schema-artifacts-folder-2/schema-part.graphql')
   ],
   outputDirectory:  path.resolve(__dirname, 'compiled'),
 });
@@ -74,7 +74,7 @@ compile({
 When all the schema partials are in the only 1 directory:
 ```typescript
 compile({
-  schemaPath: path.resolve(__dirname, 'schema-artifacts/*.graphql'),
+  schemaPath: path.resolve(__dirname, 'schema-artifacts/schema.graphql'),
   outputDirectory:  path.resolve(__dirname, 'compiled'),
 });
 ```
@@ -92,6 +92,18 @@ When you want to sort schema types as they are placed in original GQL schema:
 ```typescript
 compile({
   schemaPath: path.resolve(__dirname, 'schema-artifacts/*.graphql'),
+  outputDirectory:  path.resolve(__dirname, 'compiled'),
+  sort: 'as-is'
+});
+```
+
+Getting schema partials with globs or glob
+```typescript
+compile({
+  schemaGlobs: {
+    cwd: process.cwd(),
+    globs: '/schema-artifacts/*.graphql',
+  },
   outputDirectory:  path.resolve(__dirname, 'compiled'),
   sort: 'as-is'
 });

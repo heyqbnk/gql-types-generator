@@ -50,9 +50,22 @@ export interface CompileTextOptions extends CompileOptionsShared {
 }
 
 /**
+ * Compile function options which takes glob
+ */
+export interface CompileGlob extends CompileOptionsShared {
+  schemaGlobs: {
+    cwd: string;
+    globs: string | string[];
+  };
+}
+
+/**
  * Possible compile options
  */
-export type CompileOptions = CompileFileOptions | CompileTextOptions;
+export type CompileOptions =
+  | CompileFileOptions
+  | CompileTextOptions
+  | CompileGlob;
 
 /**
  * Represents compiled operation

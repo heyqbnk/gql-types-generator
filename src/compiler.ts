@@ -1,6 +1,6 @@
 import {buildSchema, GraphQLSchema, parse} from 'graphql';
 import {CompiledOperation, CompileOptions, DisplayType} from './types';
-import {getFileContent, write} from './fs';
+import {getFileContent, withCwdAndGlob, write} from './fs';
 import {
   parseTypeDefinitionNode,
   generateGQLOperation,
@@ -29,8 +29,11 @@ export async function compile(options: CompileOptions) {
 
   if ('schemaPath' in options) {
     schemaString = await getFileContent(options.schemaPath);
-  } else {
+  } else if ('schema' in options) {
     schemaString = options.schema;
+  } else {
+    const {cwd, globs} = options.schemaGlobs;
+    schemaString = await getFileContent(await withCwdAndGlob(globs, cwd));
   }
 
   console.log(yellow('Starting compilation with options:'), {
