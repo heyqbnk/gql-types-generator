@@ -1,6 +1,7 @@
 import glob from 'glob';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as shell from 'shelljs';
 
 const cwd = process.cwd();
 
@@ -72,6 +73,7 @@ export async function getFileContent(path: string | string[]): Promise<string> {
  * @param fileName
  * @param {string} content
  */
-export function write(content: string, directory: string, fileName: string) {
+export async function write(content: string, directory: string, fileName: string) {
+  await shell.mkdir('-p', directory);
   return fs.writeFileSync(path.resolve(directory, fileName), content);
 }
