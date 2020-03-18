@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import {Command} from 'commander';
 import {compile} from './compiler';
-import {withCwdAndGlob} from './fs';
 import {withCwd} from './fs';
 
 const program = new Command('gql-types-generator');
@@ -41,11 +40,15 @@ program
     } = program;
 
     await compile({
-      operationsPath: operations
-        ? await withCwdAndGlob(operations.split(',')) : null,
-      // flattenOperations,
+      operationsGlobs: operations ? {
+        cwd: process.cwd(),
+        globs: operations.split(','),
+      } : null,
       removeDescription,
-      schemaPath: await withCwdAndGlob(schemaPath),
+      schemaGlobs: {
+        cwd: process.cwd(),
+        globs: schemaPath.split(','),
+      },
       display,
       outputDirectory: withCwd(outputDirectory),
     });

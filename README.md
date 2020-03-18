@@ -103,6 +103,11 @@ compile({
   schemaGlobs: {
     cwd: process.cwd(),
     globs: '/schema-artifacts/*.graphql',
+    // OR
+    globs: [
+      '/schema-artifacts-folder-1/*.graphql', 
+      '/schema-artifacts-folder-2/*.graphql'
+    ],
   },
   outputDirectory:  path.resolve(__dirname, 'compiled'),
   sort: 'as-is'

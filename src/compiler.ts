@@ -18,8 +18,6 @@ import {yellow} from 'chalk';
  */
 export async function compile(options: CompileOptions) {
   const {
-    operationsPath,
-    // flattenOperations = false,
     outputDirectory,
     display = 'default',
     removeDescription = false,
@@ -36,13 +34,7 @@ export async function compile(options: CompileOptions) {
     schemaString = await getFileContent(await withCwdAndGlob(globs, cwd));
   }
 
-  console.log(yellow('Starting compilation with options:'), {
-    operationsPath,
-    // flattenOperations,
-    outputDirectory,
-    display,
-    removeDescription,
-  });
+  console.log(yellow('Starting compilation..'));
 
   if (schemaString.length === 0) {
     throw new Error('No schema definition was found');
@@ -54,14 +46,19 @@ export async function compile(options: CompileOptions) {
   );
 
   // Then, compile operations
-  const operationsString = operationsPath
-    ? await getFileContent(operationsPath) : null;
+  let operationsString: string | null = null;
+  if ('operationsPath' in options) {
+    operationsString = await getFileContent(options.operationsPath);
+  } else if ('operations' in options) {
+    operationsString = options.operations;
+  } else if ('operationsGlobs' in options) {
+    const {cwd, globs} = options.operationsGlobs;
+    operationsString = await getFileContent(await withCwdAndGlob(globs, cwd));
+  }
 
   if (typeof operationsString === 'string') {
     if (operationsString.length === 0) {
-      throw new Error(
-        'Unable to find operations with glob(s): ' + operationsPath,
-      );
+      throw new Error('Unable to find operations');
     }
     compileOperations(operationsString, outputDirectory, schema);
   }
@@ -132,12 +129,11 @@ export function compileOperations(
         const {name, operation, loc} = node;
         const operationText = operationsString.slice(loc.start, loc.end);
         const ts = generateGQLOperation(parseOperation(node, schema));
-        const js = `module.exports = \`${operationText}\`;`;
 
         acc.push({
           operationName: name.value + toCamelCase(operation),
           ts: wrapWithWarning(ts),
-          js: wrapAsDefaultExport(js),
+          js: wrapAsDefaultExport(operationText),
         });
       }
       return acc;

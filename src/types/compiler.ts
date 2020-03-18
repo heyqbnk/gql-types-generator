@@ -3,18 +3,15 @@
  */
 export type DisplayType = 'as-is' | 'default';
 
+export interface CompileGlob {
+  cwd: string;
+  globs: string | string[];
+}
+
 /**
  * Shared compile function options
  */
 export interface CompileOptionsShared {
-  /**
-   * Globs to operations
-   */
-  operationsPath?: string | string[];
-  // /**
-  //  * States if all operations should be placed in one file
-  //  */
-  // flattenOperations?: boolean;
   /**
    * Full path to output directory
    */
@@ -30,42 +27,60 @@ export interface CompileOptionsShared {
 }
 
 /**
- * Compile function options to compile file
+ * Compiles schema with path to file(s)
  */
-export interface CompileFileOptions extends CompileOptionsShared {
-  /**
-   * Globs to schema partials
-   */
+export interface CompileSchemaWithFile {
   schemaPath: string | string[];
 }
 
 /**
- * Compile function options to compile text
+ * Compiles schema with its text representation
  */
-export interface CompileTextOptions extends CompileOptionsShared {
-  /**
-   * Schema represented as text
-   */
+export interface CompileSchemaWithText {
   schema: string;
 }
 
 /**
- * Compile function options which takes glob
+ * Compiles schema with file(s) found with glob
  */
-export interface CompileGlob extends CompileOptionsShared {
-  schemaGlobs: {
-    cwd: string;
-    globs: string | string[];
-  };
+export interface CompileSchemaWithGlob {
+  schemaGlobs: CompileGlob;
+}
+
+/**
+ * Compiles operations with their text representation
+ */
+export interface CompileOperationsWithFile {
+  operationsPath: string | string[];
+}
+
+/**
+ * Compiles operations with its text representation
+ */
+export interface CompileOperationsWithText {
+  operations: string;
+}
+
+/**
+ * Compiles operations with file(s) found with glob
+ */
+export interface CompileOperationsWithGlob {
+  operationsGlobs: CompileGlob;
 }
 
 /**
  * Possible compile options
  */
-export type CompileOptions =
-  | CompileFileOptions
-  | CompileTextOptions
-  | CompileGlob;
+export type CompileOptions = CompileOptionsShared & (
+  | CompileSchemaWithFile
+  | CompileSchemaWithText
+  | CompileSchemaWithGlob
+  ) & (
+  | CompileOperationsWithFile
+  | CompileOperationsWithText
+  | CompileOperationsWithGlob
+  | {}
+  );
 
 /**
  * Represents compiled operation
