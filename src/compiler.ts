@@ -152,6 +152,8 @@ export async function compileOperations(options: CompileOperationsOptions) {
   // Create output directory
   createDirectory(outputDirectory);
 
+  const singleFile = typeof fileName === 'string';
+
   const documentNode = parse(operations);
   const compiledTypes = documentNode
     .definitions
@@ -161,6 +163,7 @@ export async function compileOperations(options: CompileOperationsOptions) {
         const ts = generateGQLOperation(
           parseOperationDefinitionNode(node, schema, operations),
           schemaFileName,
+          !singleFile,
         );
 
         acc.push({operationName: name.value + toCamelCase(operation), ts});
@@ -170,7 +173,7 @@ export async function compileOperations(options: CompileOperationsOptions) {
 
   // If file name was passed, we have to concatenate all of the operations into
   // a single file
-  if (fileName) {
+  if (singleFile) {
     const concatenated = compiledTypes.map(t => t.ts).join('\n\n');
     transpileWithFs(concatenated, fileName, outputDirectory, removeDescription);
   }

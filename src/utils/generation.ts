@@ -119,10 +119,12 @@ export function generateGQLUnion(
  * @returns {string}
  * @param parsedType
  * @param schemaFileName
+ * @param defaultExport
  */
 export function generateGQLOperation(
   parsedType: ParsedGQLOperation,
   schemaFileName: string,
+  defaultExport: boolean,
 ): string {
   const {
     originalName, operationType, operationDefinition, variables, requiredTypes,
@@ -133,10 +135,13 @@ export function generateGQLOperation(
   const variablesDefinition = variables.fields.length === 0
     ? ''
     : (generateGQLInterface(variables, schemaFileName, true) + '\n\n');
+  const operationConst = `const ${operationStringName}: string = \`${operationSignature}\`;\n`;
 
   return formatRequiredTypes(requiredTypes, schemaFileName)
     + `export interface ${operationName} ${operationDefinition}\n\n`
     + variablesDefinition
     + `const ${operationStringName}: string = \`${operationSignature}\`;\n`
-    + `export default ${operationStringName};`;
+    + (defaultExport
+      ? (operationConst + `export default ${operationStringName};`)
+      : `export ${operationConst}`);
 }

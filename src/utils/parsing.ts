@@ -11,7 +11,7 @@ import {
 } from '../types';
 import {
   EnumTypeDefinitionNode, GraphQLObjectType, GraphQLSchema,
-  InputObjectTypeDefinitionNode, isScalarType,
+  InputObjectTypeDefinitionNode,
   ObjectTypeDefinitionNode, OperationDefinitionNode,
   ScalarTypeDefinitionNode, SelectionSetNode, TypeDefinitionNode,
   UnionTypeDefinitionNode, VariableDefinitionNode,
@@ -23,7 +23,7 @@ import {
   getIn,
   getOperationRootNode,
   getOutputTypeDefinition,
-  getOutputTypeDefinitionWithWrappers, getOutputTypeDescription,
+  getOutputTypeDefinitionWithWrappers,
   getTypeNodeDefinition, isGQLScalarType,
   transpileGQLTypeName,
 } from './misc';
@@ -196,9 +196,8 @@ export function parseSelectionSet(
         const path = operationFieldPath.length === 0
           ? name
           : `${operationFieldPath}.${name}`;
-        const foundType = getIn(rootNode, path);
-        const description = isScalarType(foundType)
-          ? null : getOutputTypeDescription(foundType);
+        const field = getIn(rootNode, path);
+        const description = field.description;
 
         if (description) {
           acc.definition += formatDescription(description, spacesCount + 2)
@@ -219,14 +218,18 @@ export function parseSelectionSet(
               acc.requiredTypes.push(t);
             }
           });
-          acc.definition += getOutputTypeDefinitionWithWrappers(foundType, definition);
+          acc.definition += getOutputTypeDefinitionWithWrappers(field.type, definition);
         } else {
-          const {name} = getFirstNonWrappingType(foundType);
+          const firstNonWrappingType = getFirstNonWrappingType(field.type);
+          const {name} = firstNonWrappingType;
 
           if (!isGQLScalarType(name) && !acc.requiredTypes.includes(name)) {
             acc.requiredTypes.push(name);
           }
-          acc.definition += getOutputTypeDefinition(foundType);
+          acc.definition += getOutputTypeDefinitionWithWrappers(
+            field.type,
+            getOutputTypeDefinition(firstNonWrappingType),
+          );
         }
 
         // Definition line end

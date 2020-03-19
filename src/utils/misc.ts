@@ -3,6 +3,8 @@ import {
   GraphQLNonWrappedType, DefinitionWithRequiredTypes,
 } from '../types';
 import {
+  GraphQLField,
+  GraphQLFieldConfig,
   GraphQLNamedType,
   GraphQLObjectType,
   GraphQLOutputType,
@@ -285,36 +287,40 @@ export function getFirstNonWrappingType(
  * @param {string} path
  * @returns {CompiledTypeName}
  */
-export function getIn(rootNode: GraphQLObjectType, path: string): GraphQLOutputType {
+export function getIn(
+  rootNode: GraphQLObjectType,
+  path: string
+): GraphQLField<any, any> | GraphQLFieldConfig<any, any> {
   const [firstPartial, ...restPartials] = path.split('.');
   const config = rootNode.toConfig();
-  let ref = config.fields[firstPartial].type;
+  let field: GraphQLField<any, any> | GraphQLFieldConfig<any, any> =
+    config.fields[firstPartial];
 
-  if (!ref) {
+  if (!field) {
     throw new Error(`Unable to find path ${path}`);
   }
   if (restPartials.length === 0) {
-    return ref;
+    return field;
   }
 
   for (let i = 0; i < restPartials.length; i++) {
     const partial = restPartials[i];
 
     // Avoid lists and non nulls. We dont care about them
-    ref = getFirstNonWrappingType(ref);
+    const type = getFirstNonWrappingType(field.type);
 
-    if (!isObjectType(ref) && !isInterfaceType(ref)) {
+    if (!isObjectType(type) && !isInterfaceType(type)) {
       throw new Error(`Unable to find path ${path}`);
     }
-    ref = ref.getFields()[partial].type;
+    field = type.getFields()[partial];
 
-    if (!ref) {
+    if (!field) {
       throw new Error(`Unable to find path ${path}`);
     }
 
     // It this partial is the last in path, we have to return type of field
     if (i === restPartials.length - 1) {
-      return ref;
+      return field;
     }
   }
 }
