@@ -11,7 +11,7 @@ import {
 } from '../types';
 import {
   EnumTypeDefinitionNode, GraphQLObjectType, GraphQLSchema,
-  InputObjectTypeDefinitionNode,
+  InputObjectTypeDefinitionNode, isScalarType,
   ObjectTypeDefinitionNode, OperationDefinitionNode,
   ScalarTypeDefinitionNode, SelectionSetNode, TypeDefinitionNode,
   UnionTypeDefinitionNode, VariableDefinitionNode,
@@ -197,7 +197,8 @@ export function parseSelectionSet(
           ? name
           : `${operationFieldPath}.${name}`;
         const foundType = getIn(rootNode, path);
-        const description = getOutputTypeDescription(foundType);
+        const description = isScalarType(foundType)
+          ? null : getOutputTypeDescription(foundType);
 
         if (description) {
           acc.definition += formatDescription(description, spacesCount + 2)
