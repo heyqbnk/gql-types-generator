@@ -4,18 +4,14 @@ import * as path from 'path';
 
 /**
  * Transpiles TypeScript code
- * @param {string} tsCode
- * @param {string} outputDirectory
- * @param {string} fileName
+ * @param directory
  * @param {boolean} removeComments
  */
-export function transpileTS(
-  tsCode: string,
-  outputDirectory: string,
-  fileName: string,
+export function transpileDirectory(
+  directory: string,
   removeComments: boolean,
 ) {
-  const filePath = path.resolve(outputDirectory, fileName);
+  const files = fs.readdirSync(directory).map(f => path.resolve(directory, f));
   const options: ts.CompilerOptions = {
     declaration: true,
     lib: ['esnext'],
@@ -30,13 +26,11 @@ export function transpileTS(
     strictNullChecks: false,
     target: ts.ScriptTarget.ES5,
   };
-  // Create TS original file with code
-  fs.writeFileSync(filePath, tsCode);
 
   // Transpile with typescript
-  const program = ts.createProgram([filePath], options);
+  const program = ts.createProgram(files, options);
   program.emit();
 
-  // Remove original file
-  fs.unlinkSync(filePath);
+  // Remove ts files
+  files.forEach(f => fs.unlinkSync(f));
 }

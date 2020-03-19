@@ -1,4 +1,5 @@
 import glob from 'glob';
+import * as path from 'path';
 import * as fs from 'fs';
 import * as shell from 'shelljs';
 import {PathType} from './types';
@@ -69,6 +70,16 @@ export async function getFileContentByPath(path: string | string[]): Promise<str
   );
 
   return contents.reduce((acc, c) => acc + c, '');
+}
+
+/**
+ * Writes content into file
+ * @param dir
+ * @param fileName
+ * @param content
+ */
+export function writeFile(dir: string, fileName: string, content: string) {
+  fs.writeFileSync(path.resolve(dir, fileName), content);
 }
 
 /**

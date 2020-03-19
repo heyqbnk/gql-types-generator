@@ -126,7 +126,6 @@ compile({
 |---|---|---|
 | `schemaString` | `string` | Schema definition |
 | `outputDirectory` | `string` | Full path to output directory |
-| `includeDescription` | `boolean?` | Should library include descriptions |
 | `display` | `DisplayType?` | How to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema |
 
 #### Example
@@ -137,7 +136,6 @@ import * as path from 'path';
 compileSchema(
   'type Query { ... }',
   path.resolve(__dirname, 'gql/compiled'),
-  true,
   'default',
 );
 ```
@@ -152,7 +150,6 @@ compileSchema(
 | `operationsString` | `string` | Operations definition |
 | `outputDirectory` | `string` | Full path to output directory |
 | `schema` | `GraphQLSchema` | Built GQL schema |
-| `removeDescription` | `boolean?` | Should library remove descriptions |
 
 #### Example
 ```typescript
@@ -164,6 +161,5 @@ compileOperations(
   path.resolve(__dirname, 'gql/compiled'),
   // We can get this value via compileSchema
   gqlSchema,
-  true,
 );
 ```
