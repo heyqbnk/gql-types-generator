@@ -58,7 +58,7 @@ export function generateGQLInterface(
 
   return formatRequiredTypes(requiredTypes)
     + formatDescription(description)
-    + `export declare interface ${name} {${definition}}`
+    + `export interface ${name} {${definition}}`
 }
 
 /**
@@ -77,7 +77,7 @@ export function generateGQLEnum(parsedType: ParsedGQLEnumType): string {
   }, '\n');
 
   return formatDescription(description)
-    + `export declare enum ${name} {${content}}`;
+    + `export enum ${name} {${content}}`;
 }
 
 /**
@@ -88,7 +88,7 @@ export function generateGQLEnum(parsedType: ParsedGQLEnumType): string {
 export function generateGQLScalar(parsedType: ParsedGQLScalarType): string {
   const {description, name} = parsedType;
 
-  return formatDescription(description) + `export declare type ${name} = any;`
+  return formatDescription(description) + `export type ${name} = any;`
 }
 
 /**
@@ -101,7 +101,7 @@ export function generateGQLUnion(parsedType: ParsedGQLUnionType): string {
 
   return formatRequiredTypes(requiredTypes)
     + formatDescription(description)
-    + `export declare type ${name} = ${types.join(' | ')};`;
+    + `export type ${name} = ${types.join(' | ')};`;
 }
 
 /**
@@ -120,7 +120,7 @@ export function generateGQLOperation(parsedType: ParsedGQLOperation): string {
     : (generateGQLInterface(variables, true) + '\n\n');
 
   return formatRequiredTypes(requiredTypes)
-    + `export declare interface ${operationName} ${operationDefinition}\n\n`
+    + `export interface ${operationName} ${operationDefinition}\n\n`
     + variablesDefinition
     + `declare const ${operationStringName}: string;\n`
     + `export default ${operationStringName};`;

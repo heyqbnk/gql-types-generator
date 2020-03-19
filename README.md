@@ -144,7 +144,7 @@ compileSchema(
 
 ---
 
-### `compileOperations(schemaString, outputDirectory, includeDescription?, display?)`
+### `compileOperations(operationsString, outputDirectory, schema, removeDescription?)`
 #### List of available options
 
 | Name | Type | Description |
@@ -152,6 +152,7 @@ compileSchema(
 | `operationsString` | `string` | Operations definition |
 | `outputDirectory` | `string` | Full path to output directory |
 | `schema` | `GraphQLSchema` | Built GQL schema |
+| `removeDescription` | `boolean?` | Should library remove descriptions |
 
 #### Example
 ```typescript
@@ -163,5 +164,6 @@ compileOperations(
   path.resolve(__dirname, 'gql/compiled'),
   // We can get this value via compileSchema
   gqlSchema,
+  true,
 );
 ```

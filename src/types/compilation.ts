@@ -56,6 +56,5 @@ export interface CompileOptions {
  */
 export interface CompiledOperation {
   operationName: string;
-  js: string;
   ts: string;
 }

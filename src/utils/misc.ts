@@ -3,9 +3,20 @@ import {
   GraphQLNonWrappedType, DefinitionWithRequiredTypes,
 } from '../types';
 import {
-  GraphQLNamedType, GraphQLObjectType, GraphQLOutputType, GraphQLSchema,
-  isEnumType, isInterfaceType, isListType, isNonNullType, isObjectType,
-  isScalarType, isUnionType, isWrappingType, OperationTypeNode, TypeNode,
+  GraphQLNamedType,
+  GraphQLObjectType,
+  GraphQLOutputType,
+  GraphQLSchema,
+  isEnumType,
+  isInterfaceType,
+  isListType,
+  isNonNullType,
+  isObjectType,
+  isScalarType,
+  isUnionType,
+  isWrappingType,
+  OperationTypeNode,
+  TypeNode,
 } from 'graphql';
 
 /**
@@ -166,7 +177,20 @@ export function getOutputTypeDefinitionWithWrappers(
   if (isListType(type)) {
     def = `Array<${def}>`;
   }
+
   return nullable ? makeNullable(def) : def;
+}
+
+/**
+ * Returns OutputType description
+ * @param {GraphQLOutputType} type
+ * @returns {string | null}
+ */
+export function getOutputTypeDescription(type: GraphQLOutputType): string | null {
+  if (isNonNullType(type) || isListType(type)) {
+    return getOutputTypeDescription(type.ofType);
+  }
+  return type.description || null;
 }
 
 /**
@@ -303,23 +327,4 @@ export function formatRequiredTypes(types: string[]) {
   return types.length === 0
     ? ''
     : `import { ${types.join(', ')} } from './schema';\n\n`;
-}
-
-/**
- * Wraps with module.exports
- * @param {string} text
- * @returns {string}
- */
-export function asModuleExports(text: string): string {
-  return `module.exports = \`${text}\`;`;
-}
-
-/**
- * Wraps with exports
- * @param name
- * @param {string} text
- * @returns {string}
- */
-export function asExports(name: string, text: string): string {
-  return `exports.${name} = \`${text}\`;`;
 }

@@ -1,12 +1,14 @@
 import {buildSchema, GraphQLSchema, parse} from 'graphql';
 import {CompiledOperation, CompileOptions, DisplayType} from './types';
-import {getFileContent, write} from './fs';
+import {createDirectory, getFileContent} from './fs';
+import {transpileTS} from './utils';
 import {
   parseTypeDefinitionNode,
   generateGQLOperation,
   generateTSTypeDefinition,
   getSorter,
-  parseOperationDefinitionNode, toCamelCase, asModuleExports, asExports,
+  parseOperationDefinitionNode,
+  toCamelCase,
 } from './utils';
 import {yellow} from 'chalk';
 
@@ -23,7 +25,6 @@ export async function compile(options: CompileOptions) {
     schemaPath,
     operationsPath,
   } = options;
-  const includeDescription = !removeDescription;
   const schemaString = await getFileContent(schemaPath);
 
   if (schemaString.length === 0) {
@@ -32,18 +33,21 @@ export async function compile(options: CompileOptions) {
 
   console.log(yellow('Starting compilation..'));
 
+  // Safely create directory
+  await createDirectory(outputDirectory);
+
   // Firstly compile schema
   const {schema} = await compileSchema(
-    schemaString, outputDirectory, includeDescription, display,
+    schemaString, outputDirectory, removeDescription, display,
   );
 
   // Then, compile operations
-  const operationsString: string | null = operationsPath
+  const operationsString = operationsPath
     ? await getFileContent(operationsPath)
     : null;
-  let indexJsContent = `exports.schema = \`${schemaString}\`;\n`;
-  let indexTsContent = `declare const schema: string;\n`
-   + 'export default schema;\n';
+
+  // index.ts content
+  let index = `export { default as schema } from './schema';\n`;
 
   if (typeof operationsString === 'string') {
     if (operationsString.length === 0) {
@@ -52,17 +56,13 @@ export async function compile(options: CompileOptions) {
     const {compiledTypes} =
       await compileOperations(operationsString, outputDirectory, schema);
 
-    compiledTypes.forEach(({operationName, js}) => {
-      indexTsContent += `export * from './${operationName}';\n`
+    compiledTypes.forEach(({operationName}) => {
+      index += `export * from './${operationName}';\n`
         + `export { default as ${operationName} } from './${operationName}';\n`;
-      indexJsContent += asExports(operationName, js) + '\n';
     });
   }
 
-  // Create and write index files
-  await write(indexTsContent, outputDirectory, 'index.d.ts');
-  await write(indexJsContent, outputDirectory, 'index.js');
-
+  transpileTS(index, outputDirectory, 'index.ts', removeDescription);
   console.log(yellow('Compilation completed successfully!'));
 }
 
@@ -70,13 +70,13 @@ export async function compile(options: CompileOptions) {
  * Compiles schema
  * @param schemaString
  * @param {string} outputDirectory
- * @param {boolean} includeDescription
+ * @param removeDescription
  * @param display
  */
 export async function compileSchema(
   schemaString: string,
   outputDirectory: string,
-  includeDescription = false,
+  removeDescription = false,
   display: DisplayType = 'default',
 ) {
   // Build GraphQL schema
@@ -85,24 +85,27 @@ export async function compileSchema(
   // Sort types depending on display type
   const types = schema.toConfig().types.sort(getSorter(display));
 
-  let compiledTypes = types.reduce<string[]>((acc, type) => {
+  let schemaDefinition = types.reduce<string[]>((acc, type) => {
     // We parse only types used in schema. We can meet internal types. Internal
     // types dont have astNode
     if (type.astNode !== undefined) {
-      acc.push(generateTSTypeDefinition(
-        parseTypeDefinitionNode(type.astNode, includeDescription),
-      ));
+      acc.push(generateTSTypeDefinition(parseTypeDefinitionNode(type.astNode)));
     }
 
     return acc;
   }, []).join('\n\n');
 
-  compiledTypes += '\n\ndeclare const schema: string;\n'
+  // Add schema as default export
+  schemaDefinition += `\n\nconst schema = \`${schemaString}\`;\n`
     + `export default schema;`;
 
   // Write all the schema into a single file
-  await write(compiledTypes, outputDirectory, 'schema.d.ts');
-  await write(asModuleExports(schemaString), outputDirectory, 'schema.js');
+  transpileTS(
+    schemaDefinition,
+    outputDirectory,
+    'schema.ts',
+    removeDescription,
+  );
 
   return {schema}
 }
@@ -112,39 +115,30 @@ export async function compileSchema(
  * @param {string} operationsString
  * @param {string} outputDirectory
  * @param schema
+ * @param removeDescription
  */
 export async function compileOperations(
   operationsString: string,
   outputDirectory: string,
   schema: GraphQLSchema,
+  removeDescription = false,
 ) {
   const documentNode = parse(operationsString);
   const compiledTypes = documentNode
     .definitions
     .reduce<CompiledOperation[]>((acc, node) => {
       if (node.kind === 'OperationDefinition') {
-        const {name, operation, loc} = node;
-        const operationText = operationsString.slice(loc.start, loc.end);
+        const {name, operation} = node;
         const ts = generateGQLOperation(parseOperationDefinitionNode(node, schema));
 
-        acc.push({
-          operationName: name.value + toCamelCase(operation),
-          ts,
-          js: operationText,
-        });
+        acc.push({operationName: name.value + toCamelCase(operation), ts});
       }
       return acc;
     }, []);
 
-  await Promise.all(
-    compiledTypes.reduce<Promise<any>[]>((acc, {ts, operationName, js}) => {
-      acc.push(write(ts, outputDirectory, `${operationName}.d.ts`));
-      acc.push(write(asModuleExports(js), outputDirectory, `${operationName}.js`));
-      return acc;
-    }, []),
-  );
+  compiledTypes.forEach(({ts, operationName}) => {
+    transpileTS(ts, outputDirectory, `${operationName}.ts`, removeDescription)
+  });
 
-  return {
-    compiledTypes,
-  };
+  return {compiledTypes};
 }

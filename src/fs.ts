@@ -1,5 +1,4 @@
 import glob from 'glob';
-import * as path from 'path';
 import * as fs from 'fs';
 import * as shell from 'shelljs';
 import {PathType} from './types';
@@ -73,14 +72,12 @@ export async function getFileContentByPath(path: string | string[]): Promise<str
 }
 
 /**
- * Writes file with passed content
- * @param directory
- * @param fileName
- * @param {string} content
+ * Recursively creates directory
+ * @param {string} directory
+ * @returns {ShellString}
  */
-export async function write(content: string, directory: string, fileName: string) {
-  await shell.mkdir('-p', directory);
-  return fs.writeFileSync(path.resolve(directory, fileName), content);
+export function createDirectory(directory: string) {
+  return shell.mkdir('-p', directory);
 }
 
 /**
@@ -95,5 +92,5 @@ export async function getFileContent(pathType: PathType): Promise<string> {
     return pathType.definition;
   }
   const {cwd, globs} = pathType.glob;
-  return  await getFileContentByPath(await withCwdAndGlob(globs, cwd));
+  return await getFileContentByPath(await withCwdAndGlob(globs, cwd));
 }

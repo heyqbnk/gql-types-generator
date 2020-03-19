@@ -17,12 +17,13 @@ import {
   UnionTypeDefinitionNode, VariableDefinitionNode,
 } from 'graphql';
 import {
+  formatDescription,
   getCompiledOperationName,
   getFirstNonWrappingType,
   getIn,
   getOperationRootNode,
   getOutputTypeDefinition,
-  getOutputTypeDefinitionWithWrappers,
+  getOutputTypeDefinitionWithWrappers, getOutputTypeDescription,
   getTypeNodeDefinition, isGQLScalarType,
   transpileGQLTypeName,
 } from './misc';
@@ -30,42 +31,36 @@ import {
 /**
  * Universal TypeDefinition parser
  * @param {TypeDefinitionNode} node
- * @param {boolean} includeDescription
  * @returns {ParsedGQLType}
  */
-export function parseTypeDefinitionNode(
-  node: TypeDefinitionNode,
-  includeDescription: boolean,
-): ParsedGQLType {
+export function parseTypeDefinitionNode(node: TypeDefinitionNode): ParsedGQLType {
   switch (node.kind) {
     case 'ObjectTypeDefinition':
     case 'InputObjectTypeDefinition':
-      return parseObjectTypeDefinitionNode(node, includeDescription);
+      return parseObjectTypeDefinitionNode(node);
     case 'ScalarTypeDefinition':
-      return parseScalarTypeDefinitionNode(node, includeDescription);
+      return parseScalarTypeDefinitionNode(node);
     case 'UnionTypeDefinition':
-      return parseUnionTypeDefinitionNode(node, includeDescription);
+      return parseUnionTypeDefinitionNode(node);
     case 'EnumTypeDefinition':
-      return parseEnumDefinitionNode(node, includeDescription);
+      return parseEnumDefinitionNode(node);
   }
 }
 
 /**
  * Parses GQL enum type
  * @param {EnumTypeDefinitionNode} node
- * @param includeDescription
  * @returns {ParsedGQLEnumType}
  */
 export function parseEnumDefinitionNode(
   node: EnumTypeDefinitionNode,
-  includeDescription: boolean,
 ): ParsedGQLEnumType {
   const {values, description, name} = node;
   const parsedValues = values.reduce<ParsedGQLEnumValue[]>((vAcc, v) => {
     const {description, name} = v;
 
     vAcc.push({
-      description: description && includeDescription ? description.value : null,
+      description: description ? description.value : null,
       value: name.value,
     });
 
@@ -73,7 +68,7 @@ export function parseEnumDefinitionNode(
   }, []);
 
   return {
-    description: description && includeDescription ? description.value : null,
+    description: description ? description.value : null,
     name: name.value,
     values: parsedValues,
   };
@@ -82,12 +77,10 @@ export function parseEnumDefinitionNode(
 /**
  * Parses GQL types which have fields
  * @param {ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode} node
- * @param includeDescription
  * @returns {ParsedGQLType}
  */
 export function parseObjectTypeDefinitionNode(
   node: ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode,
-  includeDescription: boolean,
 ): ParsedGQLTypeOrInterface {
   const {fields, description, name} = node;
   const parsedFields = [...fields]
@@ -97,8 +90,7 @@ export function parseObjectTypeDefinitionNode(
 
       fAcc.push({
         definition,
-        description: description && includeDescription
-          ? description.value : null,
+        description: description ? description.value : null,
         name: name.value,
         requiredTypes,
       });
@@ -106,7 +98,7 @@ export function parseObjectTypeDefinitionNode(
     }, []);
 
   return {
-    description: description && includeDescription ? description.value : null,
+    description: description ? description.value : null,
     fields: parsedFields,
     name: name.value,
   };
@@ -115,17 +107,15 @@ export function parseObjectTypeDefinitionNode(
 /**
  * Parses GQL scalar type
  * @param {ScalarTypeDefinitionNode} node
- * @param includeDescription
  * @returns {ParsedGQLScalarType}
  */
 export function parseScalarTypeDefinitionNode(
   node: ScalarTypeDefinitionNode,
-  includeDescription: boolean,
 ): ParsedGQLScalarType {
   const {name, description} = node;
 
   return {
-    description: description && includeDescription ? description.value : null,
+    description: description ? description.value : null,
     name: name.value,
   };
 }
@@ -133,12 +123,10 @@ export function parseScalarTypeDefinitionNode(
 /**
  * Parses GQL union type
  * @param {UnionTypeDefinitionNode} node
- * @param includeDescription
  * @returns {ParsedGQLUnionType}
  */
 export function parseUnionTypeDefinitionNode(
   node: UnionTypeDefinitionNode,
-  includeDescription: boolean,
 ): ParsedGQLUnionType {
   const {name, description, types} = node;
   const requiredTypes = types
@@ -147,7 +135,7 @@ export function parseUnionTypeDefinitionNode(
 
   return {
     name: name.value,
-    description: description && includeDescription ? description.value : null,
+    description: description ? description.value : null,
     requiredTypes,
     types: types.map(t => transpileGQLTypeName(t.name.value)),
   };
@@ -209,6 +197,11 @@ export function parseSelectionSet(
           ? name
           : `${operationFieldPath}.${name}`;
         const foundType = getIn(rootNode, path);
+        const description = getOutputTypeDescription(foundType);
+
+        if (description) {
+          acc.definition += formatDescription(description, spacesCount + 2)
+        }
 
         // Definition line start
         acc.definition += `${lineSpaces}${name}: `;
