@@ -220,16 +220,12 @@ export function parseSelectionSet(
           });
           acc.definition += getOutputTypeDefinitionWithWrappers(field.type, definition);
         } else {
-          const firstNonWrappingType = getFirstNonWrappingType(field.type);
-          const {name} = firstNonWrappingType;
+          const {name} = getFirstNonWrappingType(field.type);
 
           if (!isGQLScalarType(name) && !acc.requiredTypes.includes(name)) {
             acc.requiredTypes.push(name);
           }
-          acc.definition += getOutputTypeDefinitionWithWrappers(
-            field.type,
-            getOutputTypeDefinition(firstNonWrappingType),
-          );
+          acc.definition += getOutputTypeDefinition(field.type);
         }
 
         // Definition line end
