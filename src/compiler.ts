@@ -1,7 +1,9 @@
 import {buildSchema, GraphQLSchema, parse} from 'graphql';
 import {CompiledOperation, CompileOptions, DisplayType} from './types';
 import {createDirectory, getFileContent, writeFile} from './fs';
-import {transpileDirectory} from './utils';
+import {transpile} from './utils';
+import * as path from 'path';
+import rimraf from 'rimraf';
 import {
   parseTypeDefinitionNode,
   generateGQLOperation,
@@ -33,11 +35,13 @@ export async function compile(options: CompileOptions) {
 
   console.log(yellow('Starting compilation..'));
 
-  // Safely create directory
+  // Safely create directories
+  const tempDir = path.resolve(outputDirectory, '__temp');
   await createDirectory(outputDirectory);
+  await createDirectory(tempDir);
 
   // Firstly compile schema
-  const {schema} = await compileSchema(schemaString, outputDirectory, display);
+  const {schema} = await compileSchema(schemaString, tempDir, display);
 
   // Then, compile operations
   const operationsString = operationsPath
@@ -53,7 +57,7 @@ export async function compile(options: CompileOptions) {
       throw new Error('Unable to find operations');
     }
     const {compiledTypes} =
-      await compileOperations(operationsString, outputDirectory, schema);
+      await compileOperations(operationsString, tempDir, schema);
 
     compiledTypes.forEach(({operationName}) => {
       index += `export * from './${operationName}';\n`
@@ -61,9 +65,11 @@ export async function compile(options: CompileOptions) {
     });
   }
 
-  writeFile(outputDirectory, 'index.ts', index);
-  transpileDirectory(outputDirectory, removeDescription);
-  console.log(yellow('Compilation completed successfully!'));
+  writeFile(tempDir, 'index.ts', index);
+  transpile(tempDir, outputDirectory, removeDescription);
+  rimraf(tempDir, () => {
+    console.log(yellow('Compilation completed successfully!'));
+  });
 }
 
 /**

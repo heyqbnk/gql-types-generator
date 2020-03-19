@@ -1,6 +1,6 @@
 {
   "name": "gql-types-generator",
-  "version": "1.2.24",
+  "version": "1.2.25",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "https://github.com/wolframdeus/gql-types-generator.git",
@@ -21,7 +21,7 @@
   },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.json",
-    "dev": "tsc -w",
+    "dev": "rimraf dist && tsc -w",
     "release": "yarn build && yarn publish"
   },
   "dependencies": {
@@ -29,12 +29,14 @@
     "commander": "^5.0.0",
     "glob": "^7.1.6",
     "graphql": "^14.6.0",
+    "rimraf": "^3.0.2",
     "shelljs": "^0.8.3",
     "typescript": "^3.8.3"
   },
   "devDependencies": {
     "@types/glob": "^7.1.1",
     "@types/node": "^13.9.1",
+    "@types/rimraf": "^2.0.3",
     "@types/shelljs": "^0.8.6",
     "ts-node-dev": "^1.0.0-pre.44"
   }
