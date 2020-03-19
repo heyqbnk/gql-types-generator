@@ -122,6 +122,6 @@ export function generateGQLOperation(parsedType: ParsedGQLOperation): string {
   return formatRequiredTypes(requiredTypes)
     + `export interface ${operationName} ${operationDefinition}\n\n`
     + variablesDefinition
-    + `declare const ${operationStringName}: string;\n`
+    + `const ${operationStringName}: string;\n`
     + `export default ${operationStringName};`;
 }

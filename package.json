@@ -1,6 +1,6 @@
 {
   "name": "gql-types-generator",
-  "version": "1.2.17",
+  "version": "1.2.18",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "https://github.com/wolframdeus/gql-types-generator.git",
@@ -29,14 +29,14 @@
     "commander": "^5.0.0",
     "glob": "^7.1.6",
     "graphql": "^14.6.0",
-    "shelljs": "^0.8.3"
+    "shelljs": "^0.8.3",
+    "typescript": "^3.8.3"
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",
     "@types/glob": "^7.1.1",
     "@types/node": "^13.9.1",
     "@types/shelljs": "^0.8.6",
-    "ts-node-dev": "^1.0.0-pre.44",
-    "typescript": "^3.8.3"
+    "ts-node-dev": "^1.0.0-pre.44"
   }
 }
