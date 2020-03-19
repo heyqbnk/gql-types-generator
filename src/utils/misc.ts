@@ -119,7 +119,7 @@ export function getTypeNodeDefinition(
             requiredTypes.push(t);
           }
         });
-        definition = `Array<${_definition}>`;
+        definition = `${_definition}[]`;
       }
 
       if (nullable) {
@@ -145,7 +145,7 @@ export function getOutputTypeDefinition(
   }
   let definition = '';
   if (isListType(type)) {
-    definition = `Array<${getOutputTypeDefinition(type.ofType)}>`;
+    definition = `${getOutputTypeDefinition(type.ofType)}[]`;
   } else if (isScalarType(type)) {
     definition = transpileGQLTypeName(type.name);
   } else if (
@@ -178,22 +178,10 @@ export function getOutputTypeDefinitionWithWrappers(
   let def = definition;
 
   if (isListType(type)) {
-    def = `Array<${def}>`;
+    def = `${def}[]`;
   }
 
   return nullable ? makeNullable(def) : def;
-}
-
-/**
- * Returns OutputType description
- * @param {GraphQLOutputType} type
- * @returns {string | null}
- */
-export function getOutputTypeDescription(type: GraphQLOutputType): string | null {
-  if (isNonNullType(type) || isListType(type)) {
-    return getOutputTypeDescription(type.ofType);
-  }
-  return type.description || null;
 }
 
 /**
