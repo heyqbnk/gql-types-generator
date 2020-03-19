@@ -140,7 +140,6 @@ export function generateGQLOperation(
   return formatRequiredTypes(requiredTypes, schemaFileName)
     + `export interface ${operationName} ${operationDefinition}\n\n`
     + variablesDefinition
-    + `const ${operationStringName}: string = \`${operationSignature}\`;\n`
     + (defaultExport
       ? (operationConst + `export default ${operationStringName};`)
       : `export ${operationConst}`);
