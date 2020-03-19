@@ -55,7 +55,7 @@ export async function compile(options: CompileOptions) {
       throw new Error('Unable to find operations');
     }
     const {compiledTypes} =
-      await compileOperations(operationsString, outputDirectory, schema);
+      await compileOperations(operationsString, outputDirectory, schema, removeDescription);
 
     compiledTypes.forEach(({operationName}) => {
       index += `export * from './${operationName}';\n`
@@ -97,7 +97,7 @@ export async function compileSchema(
   }, []).join('\n\n');
 
   // Add schema as default export
-  schemaDefinition += `\n\nconst schema = \`${schemaString}\`;\n`
+  schemaDefinition += `\n\nconst schema: string = \`${schemaString}\`;\n`
     + `export default schema;`;
 
   // Write all the schema into a single file
