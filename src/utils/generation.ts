@@ -112,6 +112,7 @@ export function generateGQLUnion(parsedType: ParsedGQLUnionType): string {
 export function generateGQLOperation(parsedType: ParsedGQLOperation): string {
   const {
     originalName, operationType, operationDefinition, variables, requiredTypes,
+    operationSignature,
   } = parsedType;
   const operationName = getCompiledOperationName(originalName, operationType);
   const operationStringName = originalName + toCamelCase(operationType);
@@ -122,6 +123,6 @@ export function generateGQLOperation(parsedType: ParsedGQLOperation): string {
   return formatRequiredTypes(requiredTypes)
     + `export interface ${operationName} ${operationDefinition}\n\n`
     + variablesDefinition
-    + `const ${operationStringName}: string;\n`
+    + `const ${operationStringName}: string = \`${operationSignature}\`;\n`
     + `export default ${operationStringName};`;
 }

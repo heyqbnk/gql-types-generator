@@ -244,13 +244,15 @@ export function parseSelectionSet(
  * Parses GQL operation
  * @param {OperationDefinitionNode} node
  * @param {GraphQLSchema} schema
+ * @param operationsString
  * @returns {ParsedGQLOperation}
  */
 export function parseOperationDefinitionNode(
   node: OperationDefinitionNode,
   schema: GraphQLSchema,
+  operationsString: string,
 ): ParsedGQLOperation {
-  const {name, selectionSet, operation, variableDefinitions} = node;
+  const {name, selectionSet, operation, variableDefinitions, loc} = node;
   const originalName = name.value;
   const rootNode = getOperationRootNode(schema, operation);
   const {definition, requiredTypes} = parseSelectionSet(rootNode, schema, selectionSet);
@@ -270,6 +272,7 @@ export function parseOperationDefinitionNode(
 
   return {
     originalName,
+    operationSignature: operationsString.slice(loc.start, loc.end),
     operationType: operation,
     operationDefinition: definition,
     requiredTypes: allRequiredTypes,

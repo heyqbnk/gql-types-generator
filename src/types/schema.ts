@@ -65,6 +65,7 @@ export type ParsedGQLType = ParsedGQLTypeOrInterface
  */
 export interface ParsedGQLOperation {
   originalName: string;
+  operationSignature: string;
   operationType: OperationTypeNode;
   operationDefinition: string;
   requiredTypes: string[];

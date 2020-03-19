@@ -130,7 +130,9 @@ export async function compileOperations(
     .reduce<CompiledOperation[]>((acc, node) => {
       if (node.kind === 'OperationDefinition') {
         const {name, operation} = node;
-        const ts = generateGQLOperation(parseOperationDefinitionNode(node, schema));
+        const ts = generateGQLOperation(
+          parseOperationDefinitionNode(node, schema, operationsString),
+        );
 
         acc.push({operationName: name.value + toCamelCase(operation), ts});
       }
