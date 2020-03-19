@@ -51,16 +51,16 @@ Library provides such functions as `compile`, `compileSchema` and
 
 ---
 
-### `compile`
+### `compile(options)`
 #### List of available options
 
 | Name | Type | Description |
 |---|---|---|
-| `outputDirectory` | `string` | Full path to output directory |
-| `removeDescription` | `boolean?` | Should library remove descriptions |
-| `display` | `DisplayType?` | How to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema |
-| `schemaPath` | `PathType` | Defines paths to schema. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts#L23-L26) for more |
-| `operationsPath` | `PathType?` | Defines paths to operations. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts#L23-L26) for more |
+| `options.outputDirectory` | `string` | Full path to output directory |
+| `options.removeDescription` | `boolean?` | Should library remove descriptions |
+| `options.display` | `DisplayType?` | How to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema |
+| `options.schemaPath` | `PathType` | Defines paths to schema. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts#L23-L26) for more |
+| `options.operationsPath` | `PathType?` | Defines paths to operations. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts#L23-L26) for more |
 
 #### Example
 ```typescript

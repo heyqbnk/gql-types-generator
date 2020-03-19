@@ -1,10 +1,10 @@
 {
   "name": "gql-types-generator",
-  "version": "1.2.12",
+  "version": "1.2.13",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "https://github.com/wolframdeus/gql-types-generator.git",
-  "author": "wolframdeus <wolframdeus@gmail.com>",
+  "author": "wolframdeus <wolfram.deus@gmail.com>",
   "keywords": [
     "graphql",
     "compile",
