@@ -12,7 +12,8 @@ gql-types-generator
 [size-image]: https://img.shields.io/bundlephobia/minzip/gql-types-generator
 [version-image]: https://img.shields.io/npm/v/gql-types-generator
 
-Package to generate types depending on GraphQL scheme, mutations and queries.
+Package to generate TypeScript types depending on GraphQL scheme, mutations and 
+queries.
 
 ## Install
 ```
@@ -44,6 +45,25 @@ Options:
 
 When using CLI, each glob will be formatted as process.cwd() + glob. You can
 pass an array of globs using comma between them like `src/schema1.graphql,src/schema2.graphql`
+
+As a result, command creates a directory on passed `--output-directory` path,
+generates files `schema.d.ts` and `schema.js`:
+ 
+- `schema.d.ts` contains all schema types and by default exports constant `schema: string` which
+is a text representation of schema
+- `schema.js` exports by default text representation of schema (`modules.exports = ' ... ';`)
+
+If `--operations` was passed, command is searching for operations and creates a
+pair of `.d.ts` and `.js` files for each found operation. Name of each created
+file depends on original operation name and its type. So, if operation was
+`query getUsers { ... }`, created files will be `getUsersQuery.d.ts` and
+`getUsersQuery.js`.
+
+- `.d.ts` by default exports string which is a text representation of operation.
+Additionally file contains types connected with operation. They can be:
+    - Operation return type (for example, `GetUsersQuery`)
+    - Operation variables type (for example, `GetUsersQueryVariables`)
+- `.js` exports by default text representation of operation (`modules.exports = ' ... ';`) 
 
 ## Programmatic control
 Library provides such functions as `compile`, `compileSchema` and 
