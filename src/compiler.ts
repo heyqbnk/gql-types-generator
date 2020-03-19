@@ -47,7 +47,8 @@ export async function compile(options: CompileOptions) {
     : null;
 
   // index.ts content
-  let index = `export { default as schema } from './schema';\n`;
+  let index = `export { default as schema } from './schema';\n`
+    + `export * from './schema';\n`;
 
   if (typeof operationsString === 'string') {
     if (operationsString.length === 0) {
