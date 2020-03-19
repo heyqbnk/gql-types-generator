@@ -13,17 +13,21 @@ import {
 /**
  * Universal TS definition generator
  * @param {ParsedGQLType} parsedType
+ * @param schemaFileName
  * @returns {string}
  */
-export function generateTSTypeDefinition(parsedType: ParsedGQLType): string {
+export function generateTSTypeDefinition(
+  parsedType: ParsedGQLType,
+  schemaFileName: string,
+): string {
   if ('values' in parsedType) {
     return generateGQLEnum(parsedType);
   }
   if ('types' in parsedType) {
-    return generateGQLUnion(parsedType);
+    return generateGQLUnion(parsedType, schemaFileName);
   }
   if ('fields' in parsedType) {
-    return generateGQLInterface(parsedType);
+    return generateGQLInterface(parsedType, schemaFileName);
   }
   return generateGQLScalar(parsedType);
 }
@@ -31,11 +35,13 @@ export function generateTSTypeDefinition(parsedType: ParsedGQLType): string {
 /**
  * GQL interface or type => TS interface
  * @param {ParsedGQLTypeOrInterface} parsedType
+ * @param schemaFileName
  * @param importsRequired
  * @returns {string}
  */
 export function generateGQLInterface(
   parsedType: ParsedGQLTypeOrInterface,
+  schemaFileName: string,
   importsRequired = false,
 ): string {
   const {name, description, fields} = parsedType;
@@ -56,7 +62,7 @@ export function generateGQLInterface(
     return acc;
   }, {definition: '\n', requiredTypes: []});
 
-  return formatRequiredTypes(requiredTypes)
+  return formatRequiredTypes(requiredTypes, schemaFileName)
     + formatDescription(description)
     + `export interface ${name} {${definition}}`
 }
@@ -94,12 +100,16 @@ export function generateGQLScalar(parsedType: ParsedGQLScalarType): string {
 /**
  * GQL union => TS type
  * @param {ParsedGQLUnionType} parsedType
+ * @param schemaFileName
  * @returns {string}
  */
-export function generateGQLUnion(parsedType: ParsedGQLUnionType): string {
+export function generateGQLUnion(
+  parsedType: ParsedGQLUnionType,
+  schemaFileName: string,
+): string {
   const {description, name, types, requiredTypes} = parsedType;
 
-  return formatRequiredTypes(requiredTypes)
+  return formatRequiredTypes(requiredTypes, schemaFileName)
     + formatDescription(description)
     + `export type ${name} = ${types.join(' | ')};`;
 }
@@ -108,8 +118,12 @@ export function generateGQLUnion(parsedType: ParsedGQLUnionType): string {
  * GQL operation => TS interfaces
  * @returns {string}
  * @param parsedType
+ * @param schemaFileName
  */
-export function generateGQLOperation(parsedType: ParsedGQLOperation): string {
+export function generateGQLOperation(
+  parsedType: ParsedGQLOperation,
+  schemaFileName: string,
+): string {
   const {
     originalName, operationType, operationDefinition, variables, requiredTypes,
     operationSignature,
@@ -118,9 +132,9 @@ export function generateGQLOperation(parsedType: ParsedGQLOperation): string {
   const operationStringName = originalName + toCamelCase(operationType);
   const variablesDefinition = variables.fields.length === 0
     ? ''
-    : (generateGQLInterface(variables, true) + '\n\n');
+    : (generateGQLInterface(variables, schemaFileName, true) + '\n\n');
 
-  return formatRequiredTypes(requiredTypes)
+  return formatRequiredTypes(requiredTypes, schemaFileName)
     + `export interface ${operationName} ${operationDefinition}\n\n`
     + variablesDefinition
     + `const ${operationStringName}: string = \`${operationSignature}\`;\n`

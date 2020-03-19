@@ -18,6 +18,7 @@ import {
   OperationTypeNode,
   TypeNode,
 } from 'graphql';
+import {getPathName} from '../fs';
 
 /**
  * Returns formatted TS description
@@ -321,10 +322,12 @@ export function getIn(rootNode: GraphQLObjectType, path: string): GraphQLOutputT
 /**
  * Formats imports for custom types
  * @param {string[]} types
+ * @param schemaFileName
  * @returns {string}
  */
-export function formatRequiredTypes(types: string[]) {
+export function formatRequiredTypes(types: string[], schemaFileName: string) {
+  const schemaName = getPathName(schemaFileName);
   return types.length === 0
     ? ''
-    : `import { ${types.join(', ')} } from './schema';\n\n`;
+    : `import { ${types.join(', ')} } from './${schemaName}';\n\n`;
 }

@@ -1,6 +1,8 @@
 /**
  * Way of sorting types
  */
+import {GraphQLSchema} from 'graphql';
+
 export type DisplayType = 'as-is' | 'default';
 
 /**
@@ -29,26 +31,13 @@ export type PathType =
  * Shared compile function options
  */
 export interface CompileOptions {
-  /**
-   * Full path to output directory
-   */
   outputDirectory: string;
-  /**
-   * Should library remove descriptions
-   */
   removeDescription?: boolean;
-  /**
-   * Types display order
-   */
   display?: DisplayType;
-  /**
-   * Path(s) to schema
-   */
   schemaPath: PathType;
-  /**
-   * Path(s) to operations
-   */
   operationsPath?: PathType;
+  schemaFileName?: string;
+  operationsFileName?: string;
 }
 
 /**
@@ -57,4 +46,27 @@ export interface CompileOptions {
 export interface CompiledOperation {
   operationName: string;
   ts: string;
+}
+
+/**
+ * Options to compile schema
+ */
+export interface CompileSchemaOptions {
+  schema: string;
+  outputDirectory: string;
+  fileName?: string;
+  display?: DisplayType;
+  removeDescription?: boolean;
+}
+
+/**
+ * Options to compile operations
+ */
+export interface CompileOperationsOptions {
+  operations: string;
+  outputDirectory: string;
+  schema: GraphQLSchema;
+  schemaFileName: string;
+  removeDescription?: boolean;
+  fileName?: string;
 }

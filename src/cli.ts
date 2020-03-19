@@ -7,6 +7,8 @@ const program = new Command('gql-types-generator');
 
 program
   .option('--operations <globs>', 'globs to find queries and mutations')
+  .option('--operations-file <filename>', 'operations file name. If passed, all operations will be placed into a single file')
+  .option('--schema-file <filename>', 'schema file name')
   .option('--remove-description', 'states if description should be removed')
   .option(
     '--display <sort>',
@@ -22,7 +24,10 @@ program
   )
   .arguments('<schema-globs>')
   .action(async schemaPath => {
-    const {operations, removeDescription, display, outputDirectory} = program;
+    const {
+      operations, removeDescription, display, outputDirectory, operationsFile,
+      schemaFile,
+    } = program;
     const operationsGlobs = operations ? {
       glob: {
         cwd: process.cwd(),
@@ -33,6 +38,7 @@ program
       cwd: process.cwd(),
       globs: schemaPath.split(','),
     };
+    console.log(schemaPath)
 
     await compile({
       operationsPath: operationsGlobs,
@@ -40,6 +46,8 @@ program
       schemaPath: {glob: schemaGlobs},
       display,
       outputDirectory: withCwd(outputDirectory),
+      schemaFileName: schemaFile,
+      operationsFileName: operationsFile,
     });
   })
   .parse(process.argv);

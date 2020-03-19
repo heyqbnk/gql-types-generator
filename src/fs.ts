@@ -49,6 +49,10 @@ export async function withCwdAndGlob(
   }, []);
 }
 
+export function getPathName(fullPath: string) {
+  return path.parse(fullPath).name;
+}
+
 /**
  * Returns content of files found with passed glob or globs
  * @returns {Promise<string>}
@@ -70,16 +74,6 @@ export async function getFileContentByPath(path: string | string[]): Promise<str
   );
 
   return contents.reduce((acc, c) => acc + c, '');
-}
-
-/**
- * Writes content into file
- * @param dir
- * @param fileName
- * @param content
- */
-export function writeFile(dir: string, fileName: string, content: string) {
-  fs.writeFileSync(path.resolve(dir, fileName), content);
 }
 
 /**
