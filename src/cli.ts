@@ -24,8 +24,10 @@ program
   .action(async schemaPath => {
     const {operations, removeDescription, display, outputDirectory} = program;
     const operationsGlobs = operations ? {
-      cwd: process.cwd(),
-      globs: operations.split(','),
+      glob: {
+        cwd: process.cwd(),
+        globs: operations.split(','),
+      },
     } : null;
     const schemaGlobs = {
       cwd: process.cwd(),
@@ -33,7 +35,7 @@ program
     };
 
     await compile({
-      operationsPath: {glob: operationsGlobs},
+      operationsPath: operationsGlobs,
       removeDescription,
       schemaPath: {glob: schemaGlobs},
       display,
