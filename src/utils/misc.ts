@@ -4,23 +4,35 @@ import {
 } from '../types';
 import {
   GraphQLField,
-  GraphQLFieldConfig,
+  GraphQLFieldConfig, GraphQLInputType,
   GraphQLNamedType,
   GraphQLObjectType,
   GraphQLOutputType,
   GraphQLSchema,
-  isEnumType,
   isInterfaceType,
   isListType,
   isNonNullType,
   isObjectType,
-  isScalarType,
-  isUnionType,
   isWrappingType,
   OperationTypeNode,
   TypeNode,
 } from 'graphql';
-import {getPathName} from '../fs';
+import {getFileName} from '../fs';
+
+// Defines which GQL type converts to which TypeScript type
+const gqlScalarTypesMap: GQLScalarCompiledTypesMap = {
+  Boolean: 'boolean',
+  Float: 'number',
+  String: 'string',
+  Int: 'number',
+  ID: 'any',
+};
+
+/**
+ * List of GQL scalar types
+ * @type {GQLScalarType[]}
+ */
+const gqlScalarTypes = Object.keys(gqlScalarTypesMap) as GQLScalarType[];
 
 /**
  * Returns formatted TS description
@@ -40,21 +52,6 @@ export function formatDescription(
     + `${before} */\n`
     : '';
 }
-
-// Defines which GQL type converts to which TypeScript type
-const gqlScalarTypesMap: GQLScalarCompiledTypesMap = {
-  Boolean: 'boolean',
-  Float: 'number',
-  String: 'string',
-  Int: 'number',
-  ID: 'any',
-};
-
-/**
- * List of GQL scalar types
- * @type {GQLScalarType[]}
- */
-const gqlScalarTypes = Object.keys(gqlScalarTypesMap) as GQLScalarType[];
 
 /**
  * States if value is GQL scalar type
@@ -133,31 +130,45 @@ export function getTypeNodeDefinition(
 /**
  * Recursively gets type definition getting deeper into types tree
  * @param {GraphQLOutputType} type
+ * @param requiredTypes
  * @param {boolean} nullable
  * @returns {string}
  */
-export function getOutputTypeDefinition(
-  type: GraphQLOutputType,
+export function getIOTypeDefinition(
+  type: GraphQLOutputType | GraphQLInputType,
+  requiredTypes: string[] = [],
   nullable = true,
-): string {
+): DefinitionWithRequiredTypes {
   if (isNonNullType(type)) {
-    return getOutputTypeDefinition(type.ofType, false);
+    return getIOTypeDefinition(type.ofType, requiredTypes, false);
   }
   let definition = '';
+
   if (isListType(type)) {
-    definition = `${getOutputTypeDefinition(type.ofType)}[]`;
-  } else if (isScalarType(type)) {
-    definition = transpileGQLTypeName(type.name);
-  } else if (
-    isObjectType(type)
-    || isInterfaceType(type)
-    || isEnumType(type)
-  ) {
-    definition = type.name;
-  } else if (isUnionType(type)) {
-    definition = type.getTypes().map(t => t.name).join(' | ');
+    const {
+      requiredTypes: _requiredTypes, definition: _definition,
+    } = getIOTypeDefinition(type.ofType, requiredTypes, true);
+
+    _requiredTypes.forEach(t => {
+      if (!isGQLScalarType(t) && !requiredTypes.includes(t)) {
+        requiredTypes.push(t);
+      }
+    });
+    definition = `${_definition}[]`;
+  } else {
+    const {name} = type;
+    definition = transpileGQLTypeName(name);
+
+    if (!isGQLScalarType(name) && !requiredTypes.includes(name)) {
+      requiredTypes.push(name);
+    }
   }
-  return nullable ? makeNullable(definition) : definition;
+
+  if (nullable) {
+    definition = makeNullable(definition);
+  }
+
+  return {definition, requiredTypes};
 }
 
 /**
@@ -277,7 +288,7 @@ export function getFirstNonWrappingType(
  */
 export function getIn(
   rootNode: GraphQLObjectType,
-  path: string
+  path: string,
 ): GraphQLField<any, any> | GraphQLFieldConfig<any, any> {
   const [firstPartial, ...restPartials] = path.split('.');
   const config = rootNode.toConfig();
@@ -320,7 +331,7 @@ export function getIn(
  * @returns {string}
  */
 export function formatRequiredTypes(types: string[], schemaFileName: string) {
-  const schemaName = getPathName(schemaFileName);
+  const schemaName = getFileName(schemaFileName);
   return types.length === 0
     ? ''
     : `import { ${types.join(', ')} } from './${schemaName}';\n\n`;

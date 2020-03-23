@@ -1,73 +1,85 @@
-import {CompiledTypeName, MaybeDescription,} from './shared';
+import {
+  CompiledTypeName,
+  DefinitionWithRequiredTypes,
+  MaybeDescription,
+} from './shared';
 import {OperationTypeNode} from 'graphql';
 
-/**
- * Parsed GQL enum value
- */
-export interface ParsedGQLEnumValue extends MaybeDescription {
-  value: string;
-}
-
-/**
- * Parsed GQL type or interface field
- */
-export interface ParsedGQLTypeOrInterfaceField extends MaybeDescription {
-  definition: string;
-  name: string;
-  requiredTypes: string[];
-}
-
-/**
- * GQL schema type base
- */
+// Shared
 export interface ParsedGQLTypeBase extends MaybeDescription {
   name: string;
 }
 
-/**
- * GQL schema enum => TS enum
- */
+export interface ParsedGQLNode extends DefinitionWithRequiredTypes {
+  name: string;
+}
+
+// GQL Enum
+export interface ParsedGQLEnumValue extends MaybeDescription {
+  value: string;
+}
+
 export interface ParsedGQLEnumType extends ParsedGQLTypeBase {
   values: ParsedGQLEnumValue[];
 }
 
-/**
- * GQL schema type or interface => TS interface
- */
-export interface ParsedGQLTypeOrInterface extends ParsedGQLTypeBase {
-  fields: ParsedGQLTypeOrInterfaceField[];
+// GQL Object
+export interface ParsedGQLObjectTypeField extends MaybeDescription, ParsedGQLNode {
+  // TODO Arguments
+  // args: DefinitionWithRequiredTypes;
 }
 
-/**
- * GQL schema scalar => TS type
- */
-export interface ParsedGQLScalarType extends ParsedGQLTypeBase {
+export interface ParsedGQLObjectType extends ParsedGQLTypeBase {
+  fields: ParsedGQLObjectTypeField[];
 }
 
-/**
- * GQL schema union => TS type
- */
+// GQL Interface
+export type ParsedGQLInterfaceTypeField = MaybeDescription & ParsedGQLNode;
+
+export interface ParsedGQLInterfaceType extends ParsedGQLTypeBase {
+  fields: ParsedGQLInterfaceTypeField[];
+}
+
+// GQL Input Object
+export type ParsedGQLInputObjectTypeField = MaybeDescription & ParsedGQLNode;
+
+export interface ParsedGQLInputObjectType extends ParsedGQLTypeBase {
+  fields: ParsedGQLInputObjectTypeField[];
+}
+
+// GQL Scalar
+export type ParsedGQLScalarType = ParsedGQLTypeBase;
+
+// GQL Union
 export interface ParsedGQLUnionType extends ParsedGQLTypeBase {
   types: CompiledTypeName[];
   requiredTypes: string[];
 }
 
-/**
- * List of parseable GQL types
- */
-export type ParsedGQLType = ParsedGQLTypeOrInterface
-  | ParsedGQLUnionType
-  | ParsedGQLScalarType
-  | ParsedGQLEnumType;
+// GQL Operation
+export type ParsedGQLVariableDefinitionsField = ParsedGQLNode;
 
-/**
- * GQL schema operation => TS types
- */
-export interface ParsedGQLOperation {
+export interface ParsedGQLVariableDefinitions {
+  name: string;
+  fields: ParsedGQLVariableDefinitionsField[]
+}
+
+export interface ParsedGQLOperationDefinitionNode {
   originalName: string;
   operationSignature: string;
   operationType: OperationTypeNode;
   operationDefinition: string;
   requiredTypes: string[];
-  variables: ParsedGQLTypeOrInterface;
+  variables: ParsedGQLVariableDefinitions;
 }
+
+/**
+ * List of GQL types which can be parsed
+ */
+export type ParsedGQLType =
+  | ParsedGQLInputObjectType
+  | ParsedGQLInterfaceType
+  | ParsedGQLObjectType
+  | ParsedGQLUnionType
+  | ParsedGQLScalarType
+  | ParsedGQLEnumType;

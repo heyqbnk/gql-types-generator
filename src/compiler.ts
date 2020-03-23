@@ -1,12 +1,11 @@
 import {buildSchema, parse} from 'graphql';
 import {
-  CompiledOperation, CompileOperationsOptions,
-  CompileOptions,
+  CompiledOperation, CompileOperationsOptions, CompileOptions,
   CompileSchemaOptions,
 } from './types';
-import {createDirectory, getFileContent, getPathName} from './fs';
+import {createDirectory, getFileContentByPath, getFileName} from './fs';
 import {
-  parseTypeDefinitionNode,
+  parseNamedType,
   generateGQLOperation,
   generateTSTypeDefinition,
   getSorter,
@@ -30,8 +29,10 @@ export async function compile(options: CompileOptions) {
     operationsPath,
     schemaFileName = 'schema.ts',
     operationsFileName,
+    operationsWrap = false,
+    scalars = {},
   } = options;
-  const schemaString = await getFileContent(schemaPath);
+  const schemaString = await getFileContentByPath(schemaPath);
 
   if (schemaString.length === 0) {
     throw new Error('No schema definition was found');
@@ -49,15 +50,16 @@ export async function compile(options: CompileOptions) {
     fileName: schemaFileName,
     display,
     removeDescription,
+    scalars,
   });
 
   // Then, compile operations
   const operationsString = operationsPath
-    ? await getFileContent(operationsPath)
+    ? await getFileContentByPath(operationsPath)
     : null;
 
   // index.ts content
-  const schemaName = getPathName(schemaFileName);
+  const schemaName = getFileName(schemaFileName);
   let index = `export { default as schema } from './${schemaName}';\n`
     + `export * from './${schemaName}';\n`;
 
@@ -72,10 +74,11 @@ export async function compile(options: CompileOptions) {
       schemaFileName,
       removeDescription,
       fileName: operationsFileName,
+      wrapWithTag: operationsWrap,
     });
 
     if (typeof operationsFileName === 'string') {
-      const operationsName = getPathName(operationsFileName);
+      const operationsName = getFileName(operationsFileName);
       index += `export * from './${operationsName}';`;
     } else {
       compiledTypes.forEach(({operationName}) => {
@@ -100,6 +103,7 @@ export async function compileSchema(options: CompileSchemaOptions) {
     fileName = 'schema.ts',
     outputDirectory,
     removeDescription = false,
+    scalars,
   } = options;
 
   // Create output directory
@@ -115,17 +119,19 @@ export async function compileSchema(options: CompileSchemaOptions) {
   let schemaDefinition = types.reduce<string[]>((acc, type) => {
     // We parse only types used in schema. We can meet internal types. Internal
     // types dont have astNode
-    if (type.astNode !== undefined) {
-      acc.push(
-        generateTSTypeDefinition(parseTypeDefinitionNode(type.astNode), fileName),
-      );
+    const parsed = parseNamedType(type);
+
+    if (parsed) {
+      acc.push(generateTSTypeDefinition(parsed, fileName, scalars));
     }
 
     return acc;
   }, []).join('\n\n');
 
-  // Add schema as default export
+  // Escape characters
   const formattedSchema = schema.replace(/'/g, '\'');
+
+  // Add schema as default export
   schemaDefinition += `\n\nconst schema: string = \`${formattedSchema}\`;\n`
     + 'export default schema;';
 
@@ -147,6 +153,7 @@ export async function compileOperations(options: CompileOperationsOptions) {
     removeDescription = false,
     schema,
     schemaFileName,
+    wrapWithTag,
   } = options;
 
   // Create output directory
@@ -164,6 +171,7 @@ export async function compileOperations(options: CompileOperationsOptions) {
           parseOperationDefinitionNode(node, schema, operations),
           schemaFileName,
           !singleFile,
+          wrapWithTag,
         );
 
         acc.push({operationName: name.value + toCamelCase(operation), ts});

@@ -49,17 +49,21 @@ export async function withCwdAndGlob(
   }, []);
 }
 
-export function getPathName(fullPath: string) {
+/**
+ * Returns path's file name
+ * @param {string} fullPath
+ * @returns {string}
+ */
+export function getFileName(fullPath: string) {
   return path.parse(fullPath).name;
 }
 
 /**
  * Returns content of files found with passed glob or globs
  * @returns {Promise<string>}
- * @param path
+ * @param paths
  */
-export async function getFileContentByPath(path: string | string[]): Promise<string> {
-  const paths = Array.isArray(path) ? path : [path];
+export async function getFileContent(...paths: string[]): Promise<string> {
   const contents = await Promise.all(
     paths.map(p => {
       return new Promise<string>((res, rej) => {
@@ -77,7 +81,7 @@ export async function getFileContentByPath(path: string | string[]): Promise<str
 }
 
 /**
- * Recursively creates directory
+ * Recursively creates directories
  * @param {string} directory
  * @returns {ShellString}
  */
@@ -90,12 +94,13 @@ export function createDirectory(directory: string) {
  * @returns {Promise<string>}
  * @param pathType
  */
-export async function getFileContent(pathType: PathType): Promise<string> {
+export async function getFileContentByPath(pathType: PathType): Promise<string> {
   if ('path' in pathType) {
-    return await getFileContentByPath(pathType.path);
+    const paths = Array.isArray(pathType.path) ? pathType.path : [pathType.path];
+    return await getFileContent(...paths);
   } else if ('definition' in pathType) {
     return pathType.definition;
   }
   const {cwd, globs} = pathType.glob;
-  return await getFileContentByPath(await withCwdAndGlob(globs, cwd));
+  return await getFileContent(...await withCwdAndGlob(globs, cwd));
 }

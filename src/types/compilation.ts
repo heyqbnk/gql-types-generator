@@ -3,7 +3,17 @@
  */
 import {GraphQLSchema} from 'graphql';
 
+/**
+ * Compiled types sorting
+ */
 export type DisplayType = 'as-is' | 'default';
+
+/**
+ * Scalars map
+ */
+export interface Scalars {
+  [name: string]: string | number;
+}
 
 /**
  * Configuration for globs
@@ -38,6 +48,8 @@ export interface CompileOptions {
   operationsPath?: PathType;
   schemaFileName?: string;
   operationsFileName?: string;
+  operationsWrap?: boolean;
+  scalars?: Scalars;
 }
 
 /**
@@ -57,6 +69,7 @@ export interface CompileSchemaOptions {
   fileName?: string;
   display?: DisplayType;
   removeDescription?: boolean;
+  scalars?: Scalars;
 }
 
 /**
@@ -67,6 +80,7 @@ export interface CompileOperationsOptions {
   outputDirectory: string;
   schema: GraphQLSchema;
   schemaFileName: string;
+  wrapWithTag?: boolean;
   removeDescription?: boolean;
   fileName?: string;
 }

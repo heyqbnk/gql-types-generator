@@ -36,17 +36,22 @@ becomes available.
 Usage: gql-types-generator [options] <schema-globs>
 
 Options:
-  --operations <globs>          globs to find queries and mutations
-  --operations-file <filename>  operations file name. If passed, all operations will be placed into a single file
-  --schema-file <filename>      schema file name
-  --remove-description          states if descriptions should be removed
-  --display <sort>              how to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema
-  --output-directory <path>     path to directory where typings will be saved
-  -h, --help                    display help for command
+  --operations <globs>             globs to find queries and mutations
+  --operations-file <filename>     operations file name. If passed, all operations will be placed into a single file
+  --operations-wrap                wraps operations with graphql-tag, making exports from operations not strings, but graphql's DocumentNode (default: false)
+  --operations-selection-separate  creates separated types for each selection set (default: false)
+  --schema-file <filename>         schema file name
+  --remove-description             states if description should be removed (default: false)
+  --display <sort>                 how to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema
+                                   (default: "default")
+  --scalars <scalars>              defines scalars types. Must be a JSON, where key is scalar name and value is its type
+  --output-directory <path>        path to directory where typings will be saved
+  -h, --help                       display help for command
 ```
 
 When using CLI, each glob will be formatted as process.cwd() + glob. You can
-pass an array of globs using comma between them like `src/schema1.graphql,src/schema2.graphql`
+pass an array of globs using comma between them like 
+`src/schema1.graphql,src/schema2.graphql`
 
 ### Compilation result
 As a result, command creates a directory on passed `--output-directory` path,
@@ -56,14 +61,22 @@ generates `d.ts` definition file and compiled `js` code:
 which is a text representation of schema
 - `js` exports by default text representation of schema
 
-If `--operations` was passed, command is searching for operations and creates a
+If `--operations` passed, command is searching for operations and creates a
 pair of `d.ts` and `js` files for each found operation. Name of each created
 file depends on original operation name and its type. So, if operation was
 `query getUsers { ... }`, created files will be `getUsersQuery.d.ts` and
 `getUsersQuery.js`.
 
-if `--operations-file` was passed, all files will be placed into a single file
+If `--operations-file` passed, all files will be placed into a single file
 with passed name.
+
+If `--operations-wrap` passed, wraps each operation string with `graphql-tag`
+package making each operation not string, but `graphql`s `Document Node`.
+Useful when you use these operations on frontend with Apollo client.
+
+If `--scalars` passed, compiled type of scalar will be taken from this map.
+If scalar not found, it will be `any`. Must be stringified 
+`Record<string, string | number>`.
 
 - `d.ts` by default exports string which is a text representation of operation.
 Additionally file contains types connected with operation. They can be:
@@ -89,6 +102,8 @@ Library provides such functions as `compile`, `compileSchema` and
 | `options.operationsPath` | `PathType?` | Defines paths to operations. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts#L23-L26) for more |
 | `options.schemaFileName` | `string?` | Defines schema file name. For example - `schema.ts` |
 | `options.operationsFileName` | `string?` | Defines operations file name. For example - `operation.ts`. If passed, all operations will be placed into a single file |
+| `options.operationsWrap` | `boolean?` | States of compiled types should be `graphql`s `DocumentNode` and not string |
+| `options.scalars` | `Scalars?` | Defines types of scalars |
 
 #### Example
 ```typescript
@@ -127,6 +142,12 @@ compile({
   },
   schemaFileName: 'my-compiled-schema.ts',
   operationsFileName: 'my-compiled-operations.ts',
+  operationsWrap: true,
+  scalars: {
+    MyCustomScalar: 'Date',
+    AnotherScalar: 'number | string | Record<string, string>',
+    AndAnotherOneScalar: '"string literal"',
+  }
 });
 ```
 
@@ -142,6 +163,7 @@ compile({
 | `options.fileName` | `string?` | Output schema file name |
 | `options.display` | `DisplayType?` | How to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema |
 | `options.removeDescription` | `boolean?` | Should library remove descriptions |
+| `options.scalars` | `Scalars?` | Defines types of scalars |
 
 #### Example
 ```typescript
@@ -164,12 +186,13 @@ compileSchema({
 
 | Name | Type | Description |
 |---|---|---|
-| `operations` | `string` | Operations definition |
-| `outputDirectory` | `string` | Full path to output directory |
-| `schema` | `GraphQLSchema` | Built GQL schema |
-| `schemaFileName` | `string` | Schema file name. Used to pass in relative imports if they are required |
-| `removeDescription` | `boolean?` | Should library remove descriptions |
-| `fileName` | `string?` | Output operations file name. If passed, all operations will be placed into a single file |
+| `options.operations` | `string` | Operations definition |
+| `options.outputDirectory` | `string` | Full path to output directory |
+| `options.schema` | `GraphQLSchema` | Built GQL schema |
+| `options.schemaFileName` | `string` | Schema file name. Used to pass in relative imports if they are required |
+| `options.removeDescription` | `boolean?` | Should library remove descriptions |
+| `options.fileName` | `string?` | Output operations file name. If passed, all operations will be placed into a single file |
+| `options.wrapWithTag` | `boolean?` | States of compiled types should be `graphql`s `DocumentNode` and not string |
 
 #### Example
 ```typescript
@@ -184,5 +207,6 @@ compileOperations({
   schemaFileName: 'my-compiled-schema.ts',
   removeDescription: true,
   fileName: 'my-compiled-operations.ts',
+  wrapWithTag: false,
 });
 ```

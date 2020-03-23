@@ -1,28 +1,36 @@
 import {
   ParsedGQLEnumType,
   ParsedGQLEnumValue,
-  ParsedGQLTypeOrInterfaceField,
   ParsedGQLScalarType,
-  ParsedGQLTypeOrInterface,
   ParsedGQLUnionType,
   ParsedGQLType,
-  ParsedGQLOperation,
+  ParsedGQLOperationDefinitionNode,
   DefinitionWithRequiredTypes,
+  ParsedGQLInputObjectType,
+  ParsedGQLObjectType,
+  ParsedGQLObjectTypeField,
+  ParsedGQLInputObjectTypeField,
+  ParsedGQLVariableDefinitions,
+  ParsedGQLVariableDefinitionsField,
+  ParsedGQLInterfaceType,
 } from '../types';
 import {
-  EnumTypeDefinitionNode, GraphQLObjectType, GraphQLSchema,
-  InputObjectTypeDefinitionNode,
-  ObjectTypeDefinitionNode, OperationDefinitionNode,
-  ScalarTypeDefinitionNode, SelectionSetNode, TypeDefinitionNode,
-  UnionTypeDefinitionNode, VariableDefinitionNode,
+  GraphQLEnumType, GraphQLInputObjectType, GraphQLInterfaceType,
+  GraphQLNamedType,
+  GraphQLObjectType,
+  GraphQLScalarType,
+  GraphQLSchema, GraphQLUnionType,
+  isEnumType, isInputObjectType, isObjectType,
+  isScalarType, isUnionType,
+  OperationDefinitionNode,
+  SelectionSetNode,
+  VariableDefinitionNode,
 } from 'graphql';
 import {
   formatDescription,
   getCompiledOperationName,
-  getFirstNonWrappingType,
-  getIn,
+  getIn, getIOTypeDefinition,
   getOperationRootNode,
-  getOutputTypeDefinition,
   getOutputTypeDefinitionWithWrappers,
   getTypeNodeDefinition, isGQLScalarType,
   transpileGQLTypeName,
@@ -30,137 +38,160 @@ import {
 
 /**
  * Universal TypeDefinition parser
- * @param {TypeDefinitionNode} node
  * @returns {ParsedGQLType}
+ * @param type
  */
-export function parseTypeDefinitionNode(node: TypeDefinitionNode): ParsedGQLType {
-  switch (node.kind) {
-    case 'ObjectTypeDefinition':
-    case 'InputObjectTypeDefinition':
-      return parseObjectTypeDefinitionNode(node);
-    case 'ScalarTypeDefinition':
-      return parseScalarTypeDefinitionNode(node);
-    case 'UnionTypeDefinition':
-      return parseUnionTypeDefinitionNode(node);
-    case 'EnumTypeDefinition':
-      return parseEnumDefinitionNode(node);
+export function parseNamedType(type: GraphQLNamedType): ParsedGQLType | null {
+  if (!type.astNode) {
+    return null;
+  } else if (isScalarType(type)) {
+    return parseScalarType(type);
+  } else if (isUnionType(type)) {
+    return parseUnionType(type);
+  } else if (isEnumType(type)) {
+    return parseEnumType(type);
+  } else if (isObjectType(type)) {
+    return parseObjectType(type)
+  } else if (isInputObjectType(type)) {
+    return parseInputObjectType(type);
   }
+  return parseInterfaceType(type);
 }
 
 /**
  * Parses GQL enum type
- * @param {EnumTypeDefinitionNode} node
  * @returns {ParsedGQLEnumType}
+ * @param type
  */
-export function parseEnumDefinitionNode(
-  node: EnumTypeDefinitionNode,
-): ParsedGQLEnumType {
-  const {values, description, name} = node;
-  const parsedValues = values.reduce<ParsedGQLEnumValue[]>((vAcc, v) => {
+export function parseEnumType(type: GraphQLEnumType): ParsedGQLEnumType {
+  const {description, name} = type;
+  const values = type.getValues();
+  const parsedValues = values.map<ParsedGQLEnumValue>(v => {
     const {description, name} = v;
-
-    vAcc.push({
-      description: description ? description.value : null,
-      value: name.value,
-    });
-
-    return vAcc;
+    return {description, value: name};
   }, []);
 
-  return {
-    description: description ? description.value : null,
-    name: name.value,
-    values: parsedValues,
-  };
+  return {description, name, values: parsedValues};
 }
 
 /**
- * Parses GQL types which have fields
- * @param {ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode} node
- * @returns {ParsedGQLType}
+ * Parses GQL interface type
+ * @param {GraphQLInterfaceType} type
+ * @returns {ParsedGQLInterfaceType}
  */
-export function parseObjectTypeDefinitionNode(
-  node: ObjectTypeDefinitionNode | InputObjectTypeDefinitionNode,
-): ParsedGQLTypeOrInterface {
-  const {fields, description, name} = node;
-  const parsedFields = [...fields]
-    .reduce<ParsedGQLTypeOrInterfaceField[]>((fAcc, f) => {
+export function parseInterfaceType(
+  type: GraphQLInterfaceType,
+): ParsedGQLInterfaceType {
+  const {description, name} = type;
+  const parsedFields = Object.values(type.getFields())
+    .map<ParsedGQLObjectTypeField>(f => {
       const {type, description, name} = f;
-      const {definition, requiredTypes} = getTypeNodeDefinition(type);
+      const {definition, requiredTypes} = getIOTypeDefinition(type);
 
-      fAcc.push({
-        definition,
-        description: description ? description.value : null,
-        name: name.value,
-        requiredTypes,
-      });
-      return fAcc;
+      return {definition, description, name, requiredTypes};
     }, []);
 
-  return {
-    description: description ? description.value : null,
-    fields: parsedFields,
-    name: name.value,
-  };
+  return {description, fields: parsedFields, name};
+}
+
+/**
+ * Parses GQL object type
+ * @returns {ParsedGQLType}
+ * @param type
+ */
+export function parseObjectType(
+  type: GraphQLObjectType,
+): ParsedGQLObjectType {
+  const {description, name} = type;
+  const parsedFields = Object.values(type.getFields())
+    .map<ParsedGQLObjectTypeField>(f => {
+      const {type, description, name} = f;
+      const {definition, requiredTypes} = getIOTypeDefinition(type);
+
+      return {
+        definition,
+        description,
+        name,
+        requiredTypes,
+      };
+    }, []);
+
+  return {description, fields: parsedFields, name};
+}
+
+/**
+ * Parses GQL input object type
+ * @returns {ParsedGQLInputObjectType}
+ * @param type
+ */
+export function parseInputObjectType(
+  type: GraphQLInputObjectType,
+): ParsedGQLInputObjectType {
+  const {description, name} = type;
+  const parsedFields = Object.values(type.getFields())
+    .map<ParsedGQLInputObjectTypeField>(f => {
+      const {type, description, name} = f;
+      const {definition, requiredTypes} = getIOTypeDefinition(type);
+
+      return {
+        definition,
+        description,
+        name,
+        requiredTypes,
+      };
+    }, []);
+
+  return {description, fields: parsedFields, name};
 }
 
 /**
  * Parses GQL scalar type
- * @param {ScalarTypeDefinitionNode} node
  * @returns {ParsedGQLScalarType}
+ * @param type
  */
-export function parseScalarTypeDefinitionNode(
-  node: ScalarTypeDefinitionNode,
-): ParsedGQLScalarType {
-  const {name, description} = node;
-
-  return {
-    description: description ? description.value : null,
-    name: name.value,
-  };
+export function parseScalarType(type: GraphQLScalarType): ParsedGQLScalarType {
+  const {name, description} = type;
+  return {description, name};
 }
 
 /**
  * Parses GQL union type
- * @param {UnionTypeDefinitionNode} node
  * @returns {ParsedGQLUnionType}
+ * @param type
  */
-export function parseUnionTypeDefinitionNode(
-  node: UnionTypeDefinitionNode,
-): ParsedGQLUnionType {
-  const {name, description, types} = node;
-  const requiredTypes = types
-    .filter(t => !isGQLScalarType(t.name.value))
-    .map(t => t.name.value);
+export function parseUnionType(type: GraphQLUnionType): ParsedGQLUnionType {
+  const {name, description, getTypes} = type;
+  const types = getTypes();
+  const requiredTypes = getTypes()
+    .filter(t => !isGQLScalarType(t.name))
+    .map(t => t.name);
 
   return {
-    name: name.value,
-    description: description ? description.value : null,
+    name,
+    description,
     requiredTypes,
-    types: types.map(t => transpileGQLTypeName(t.name.value)),
+    types: types.map(t => transpileGQLTypeName(t.name)),
   };
 }
 
 /**
  * Parses GQL operation variables
- * @param compiledName
+ * @param {string} compiledName
  * @param {VariableDefinitionNode[]} nodes
- * @returns {ParsedGQLTypeOrInterface}
+ * @returns {ParsedGQLVariableDefinitions}
  */
 export function parseOperationVariableDefinitions(
   compiledName: string,
   nodes: VariableDefinitionNode[],
-): ParsedGQLTypeOrInterface {
+): ParsedGQLVariableDefinitions {
   return {
     name: `${compiledName}Variables`,
-    description: null,
-    fields: nodes.map<ParsedGQLTypeOrInterfaceField>(n => {
+    fields: nodes.map<ParsedGQLVariableDefinitionsField>(n => {
       const {variable, type} = n;
       const {definition, requiredTypes} = getTypeNodeDefinition(type);
 
       return {
         name: variable.name.value,
-        description: null,
         definition,
         requiredTypes,
       };
@@ -198,6 +229,7 @@ export function parseSelectionSet(
           : `${operationFieldPath}.${name}`;
         const field = getIn(rootNode, path);
         const description = field.description;
+        let currentRequiredTypes: string[] = [];
 
         if (description) {
           acc.definition += formatDescription(description, spacesCount + 2)
@@ -211,25 +243,23 @@ export function parseSelectionSet(
           const {definition, requiredTypes} = parseSelectionSet(
             rootNode, schema, s.selectionSet, path, spacesCount + 2,
           );
-
-          // Add all required types if they were not added before
-          requiredTypes.forEach(t => {
-            if (!acc.requiredTypes.includes(t)) {
-              acc.requiredTypes.push(t);
-            }
-          });
+          currentRequiredTypes = requiredTypes;
           acc.definition += getOutputTypeDefinitionWithWrappers(field.type, definition);
         } else {
-          const {name} = getFirstNonWrappingType(field.type);
-
-          if (!isGQLScalarType(name) && !acc.requiredTypes.includes(name)) {
-            acc.requiredTypes.push(name);
-          }
-          acc.definition += getOutputTypeDefinition(field.type);
+          const {definition, requiredTypes} = getIOTypeDefinition(field.type);
+          currentRequiredTypes = requiredTypes;
+          acc.definition += definition;
         }
 
         // Definition line end
         acc.definition += ';\n';
+
+        // Add all required types if they were not added before
+        currentRequiredTypes.forEach(t => {
+          if (!acc.requiredTypes.includes(t)) {
+            acc.requiredTypes.push(t);
+          }
+        });
       }
 
       // If it was last selection, close definition
@@ -245,13 +275,13 @@ export function parseSelectionSet(
  * @param {OperationDefinitionNode} node
  * @param {GraphQLSchema} schema
  * @param operationsString
- * @returns {ParsedGQLOperation}
+ * @returns {ParsedGQLOperationDefinitionNode}
  */
 export function parseOperationDefinitionNode(
   node: OperationDefinitionNode,
   schema: GraphQLSchema,
   operationsString: string,
-): ParsedGQLOperation {
+): ParsedGQLOperationDefinitionNode {
   const {name, selectionSet, operation, variableDefinitions, loc} = node;
   const originalName = name.value;
   const rootNode = getOperationRootNode(schema, operation);
