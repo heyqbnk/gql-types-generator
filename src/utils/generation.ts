@@ -203,9 +203,12 @@ export function generateGQLOperation(
     : `const ${operationStringName}: string = \`${operationSignature}\`;\n`;
 
   // If graphql-tag required, import it
-  const gqlTagImport = wrapWithTag
-    ? 'import gql, { DocumentNode } from \'graphql-tag\';\n'
-    : '';
+  let gqlTagImport = '';
+
+  if (wrapWithTag) {
+    gqlTagImport = 'import gql from \'graphql-tag\';\n'
+    + 'import { DocumentNode } from \'graphql\';';
+  }
 
   return gqlTagImport
     // Required types import
