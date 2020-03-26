@@ -28,7 +28,7 @@ yarn add gql-types-generator
 1. Command line interface;
 2. TypeScript / JavaScript code.
 
-## Command line interface
+### Command line interface
 After installation of package is done, `gql-types-generator` command
 becomes available.
 
@@ -54,37 +54,47 @@ pass an array of globs using comma between them like
 `src/schema1.graphql,src/schema2.graphql`
 
 ### Compilation result
-As a result, command creates a directory on passed `--output-directory` path,
-generates `d.ts` definition file and compiled `js` code:
+#### Schema
+Command creates a directory on passed `--output-directory` path, generates 
+`{schemaFile}.d.ts` definition file and compiled `{schemaFile}.js` code.
  
-- `d.ts` contains all schema types and by default exports constant `schema: string` 
-which is a text representation of schema
-- `js` exports by default text representation of schema
+`{schemaFile}.d.ts` contains all schema types and by default exports 
+constant `schema` which is a text or `graphql`'s `DocumentNode` representation 
+of schema.
 
-If `--operations` passed, command is searching for operations and creates a
-pair of `d.ts` and `js` files for each found operation. Name of each created
-file depends on original operation name and its type. So, if operation was
-`query getUsers { ... }`, created files will be `getUsersQuery.d.ts` and
-`getUsersQuery.js`.
-
-If `--operations-file` passed, all files will be placed into a single file
-with passed name.
-
-If `--operations-wrap` passed, wraps each operation string with `graphql-tag`
-package making each operation not string, but `graphql`s `Document Node`.
-Useful when you use these operations on frontend with Apollo client.
+Each type definition consists of interface and namespace with the
+same name. All interface fields refers to namespace fields. So, if you want
+to get some `Query` field type you could use `Query['someField']` 
+or `Query.SomeField`. They return the same thing. It is recommended
+to use `Query.*`-like syntax for better experience.
 
 If `--scalars` passed, compiled type of scalar will be taken from this map.
 If scalar not found, it will be `any`. Must be stringified 
 `Record<string, string | number>`.
 
-- `d.ts` by default exports string which is a text representation of operation.
-Additionally file contains types connected with operation. They can be:
-    - Operation return type (for example, `GetUsersQuery`)
-    - Operation variables type (for example, `GetUsersQueryVariables`)
-- `js` exports by default text representation of operation 
+#### Operations
+To compile operations, it is required to use `--operations` argument.
 
-## Programmatic control
+Library creates single file with name `--operations-file` if it is passed
+or 2 separate files `d.ts` and `js` for each command with name
+`{operationName}{operationType}` in directory on passed `--output-directory`. 
+So, if operation was `query getUsers { ... }`, created files will be 
+`getUsersQuery.d.ts` and `getUsersQuery.js`.]
+
+If `--operations-wrap` passed, wraps each operation string with `graphql-tag`
+package making each operation not string, but `graphql`s `Document Node`.
+Useful when you use these operations on frontend with Apollo client.
+
+- `d.ts` exports selection and namespace with `Arguments` if they exist.
+Additionally namespace contains subselections represented as other
+namespaces
+- `js` exports representation of operation
+
+### Compiled types example
+You can find library test right [here](src/test). Just use command in 
+`command` file and look what happens.
+
+### Programmatic control
 Library provides such functions as `compile`, `compileSchema` and 
 `compileOperations` to generate types.
 

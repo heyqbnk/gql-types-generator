@@ -1,0 +1,3 @@
+mutation updateCostumeColor($color: COLOR!) {
+  updateCostumeColor(color: $color)
+}

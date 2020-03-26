@@ -1,0 +1,3 @@
+mutation updateCartColor($color: COLOR!) {
+  updateCartColor(color: $color)
+}

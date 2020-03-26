@@ -1,6 +1,6 @@
 import {
   CompiledTypeName, GQLScalarCompiledTypesMap, GQLScalarType, DisplayType,
-  GraphQLNonWrappedType, DefinitionWithRequiredTypes,
+  GraphQLNonWrappedType, DefinitionWithImportTypes,
 } from '../types';
 import {
   GraphQLField,
@@ -35,22 +35,44 @@ const gqlScalarTypesMap: GQLScalarCompiledTypesMap = {
 const gqlScalarTypes = Object.keys(gqlScalarTypesMap) as GQLScalarType[];
 
 /**
+ * Returns string with "count" spaces count
+ * @param {number} count
+ * @returns {string}
+ */
+export function getSpaces(count: number): string {
+  return new Array(count).fill(' ').join('');
+}
+
+/**
+ * Returns text with spaces before
+ * @param {string} text
+ * @param spacesCount
+ * @returns {string}
+ */
+export function withSpaces(text: string, spacesCount: number): string {
+  const spaces = getSpaces(spacesCount);
+
+  return text
+    .split('\n')
+    .map(p => p.length === 0 ? p : spaces + p)
+    .join('\n');
+}
+
+/**
  * Returns formatted TS description
  * @param {string} description
  * @param {number} spacesCount
  * @returns {string}
  */
 export function formatDescription(
-  description: string | null,
+  description: string | undefined,
   spacesCount: number = 0,
 ): string {
-  const before = new Array(spacesCount).fill(' ').join('');
+  if (!description) {
+    return '';
+  }
 
-  return description
-    ? `${before}/**\n`
-    + `${before} * ${description}\n`
-    + `${before} */\n`
-    : '';
+  return withSpaces(`/**\n * ${description}\n */`, spacesCount) + '\n';
 }
 
 /**
@@ -83,18 +105,18 @@ export function makeNullable(type: string): string {
 /**
  * Recursively gets type definition getting deeper into types tree
  * @param {TypeNode} node
- * @param requiredTypes
+ * @param importTypes
  * @param {boolean} nullable
  * @returns {string}
  */
 export function getTypeNodeDefinition(
   node: TypeNode,
-  requiredTypes: string[] = [],
+  importTypes: string[] = [],
   nullable = true,
-): DefinitionWithRequiredTypes {
+): DefinitionWithImportTypes {
   switch (node.kind) {
     case 'NonNullType':
-      return getTypeNodeDefinition(node.type, requiredTypes, false);
+      return getTypeNodeDefinition(node.type, importTypes, false);
     case 'NamedType':
     case 'ListType':
       let definition = '';
@@ -103,17 +125,17 @@ export function getTypeNodeDefinition(
         const name = node.name.value;
         definition = transpileGQLTypeName(name);
 
-        if (!isGQLScalarType(name) && !requiredTypes.includes(name)) {
-          requiredTypes.push(name);
+        if (!isGQLScalarType(name) && !importTypes.includes(name)) {
+          importTypes.push(name);
         }
       } else {
         const {
-          requiredTypes: _requiredTypes, definition: _definition,
-        } = getTypeNodeDefinition(node.type, requiredTypes, true);
+          importTypes: _importTypes, definition: _definition,
+        } = getTypeNodeDefinition(node.type, importTypes, true);
 
-        _requiredTypes.forEach(t => {
-          if (!isGQLScalarType(t) && !requiredTypes.includes(t)) {
-            requiredTypes.push(t);
+        _importTypes.forEach(t => {
+          if (!isGQLScalarType(t) && !importTypes.includes(t)) {
+            importTypes.push(t);
           }
         });
         definition = `${_definition}[]`;
@@ -123,35 +145,35 @@ export function getTypeNodeDefinition(
         definition = makeNullable(definition);
       }
 
-      return {definition, requiredTypes};
+      return {definition, importTypes};
   }
 }
 
 /**
  * Recursively gets type definition getting deeper into types tree
  * @param {GraphQLOutputType} type
- * @param requiredTypes
+ * @param importTypes
  * @param {boolean} nullable
  * @returns {string}
  */
 export function getIOTypeDefinition(
   type: GraphQLOutputType | GraphQLInputType,
-  requiredTypes: string[] = [],
+  importTypes: string[] = [],
   nullable = true,
-): DefinitionWithRequiredTypes {
+): DefinitionWithImportTypes {
   if (isNonNullType(type)) {
-    return getIOTypeDefinition(type.ofType, requiredTypes, false);
+    return getIOTypeDefinition(type.ofType, importTypes, false);
   }
   let definition = '';
 
   if (isListType(type)) {
     const {
-      requiredTypes: _requiredTypes, definition: _definition,
-    } = getIOTypeDefinition(type.ofType, requiredTypes, true);
+      importTypes: _importTypes, definition: _definition,
+    } = getIOTypeDefinition(type.ofType, importTypes, true);
 
-    _requiredTypes.forEach(t => {
-      if (!isGQLScalarType(t) && !requiredTypes.includes(t)) {
-        requiredTypes.push(t);
+    _importTypes.forEach(t => {
+      if (!isGQLScalarType(t) && !importTypes.includes(t)) {
+        importTypes.push(t);
       }
     });
     definition = `${_definition}[]`;
@@ -159,8 +181,8 @@ export function getIOTypeDefinition(
     const {name} = type;
     definition = transpileGQLTypeName(name);
 
-    if (!isGQLScalarType(name) && !requiredTypes.includes(name)) {
-      requiredTypes.push(name);
+    if (!isGQLScalarType(name) && !importTypes.includes(name)) {
+      importTypes.push(name);
     }
   }
 
@@ -168,31 +190,7 @@ export function getIOTypeDefinition(
     definition = makeNullable(definition);
   }
 
-  return {definition, requiredTypes};
-}
-
-/**
- * Returns met list and non-nullable wrappers
- * @param {GraphQLOutputType} type
- * @param definition
- * @param nullable
- * @returns {string}
- */
-export function getOutputTypeDefinitionWithWrappers(
-  type: GraphQLOutputType,
-  definition: string,
-  nullable = true,
-): string {
-  if (isNonNullType(type)) {
-    return getOutputTypeDefinitionWithWrappers(type.ofType, definition, false);
-  }
-  let def = definition;
-
-  if (isListType(type)) {
-    def = `${def}[]`;
-  }
-
-  return nullable ? makeNullable(def) : def;
+  return {definition, importTypes};
 }
 
 /**
@@ -330,7 +328,7 @@ export function getIn(
  * @param schemaFileName
  * @returns {string}
  */
-export function formatRequiredTypes(types: string[], schemaFileName: string) {
+export function formatImportTypes(types: string[], schemaFileName: string) {
   const schemaName = getFileName(schemaFileName);
   return types.length === 0
     ? ''

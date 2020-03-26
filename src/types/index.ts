@@ -1,4 +1,4 @@
 export * from './compilation';
 export * from './gql';
-export * from './schema';
+export * from './parsing';
 export * from './shared';

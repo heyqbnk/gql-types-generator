@@ -1,0 +1,1 @@
+gql-types-generator --operations test/mutations/*.graphql,test/queries/*.graphql --operations-wrap --scalars "{\"CustomScalar\": \"Date\"}" --output-directory test/compiled --remove-description test/schema.graphql

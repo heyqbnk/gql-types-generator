@@ -1,0 +1,3 @@
+query getTwoLastRatingDays {
+  ratingDays(count: 2)
+}

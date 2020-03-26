@@ -1,0 +1,13 @@
+query getUserFullProfile {
+  userProfile {
+    bestAverageSpeed
+    bestTime
+    cartColor
+    costumeColor
+    field
+    gamesInDay
+    gamesPlayed
+    name
+    profileImageUrl
+  }
+}

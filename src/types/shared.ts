@@ -22,7 +22,22 @@ export type GQLScalarType = 'Boolean' | 'Float' | 'String' | 'Int' | 'ID';
  * Adds optional description field
  */
 export interface MaybeDescription {
-  description: string | null;
+  description?: string;
+}
+
+/**
+ * Adds import types field
+ */
+export type WithImportTypes<Required extends boolean = false> =
+  Required extends true
+    ? { importTypes: string[] }
+    : { importTypes?: string[] }
+
+/**
+ * Adds field name as required
+ */
+export interface Named {
+  name: string;
 }
 
 /**
@@ -34,7 +49,7 @@ export type GQLScalarCompiledTypesMap = Record<GQLScalarType, CompiledTypeName>;
 /**
  * Definition and require types pair
  */
-export interface DefinitionWithRequiredTypes {
-  requiredTypes: string[];
+export interface DefinitionWithImportTypes {
+  importTypes: string[];
   definition: string;
 }

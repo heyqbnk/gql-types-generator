@@ -1,113 +1,141 @@
 import {
-  DefinitionWithRequiredTypes,
-  ParsedGQLEnumType,
-  ParsedGQLOperationDefinitionNode,
-  ParsedGQLScalarType,
-  ParsedGQLType,
-  ParsedGQLObjectType,
-  ParsedGQLInterfaceType,
-  ParsedGQLUnionType,
-  Scalars,
-  ParsedGQLVariableDefinitions,
+  ScalarsMap,
+  Union,
+  Enum,
+  Entity,
+  PreparedObject,
+  Operation,
+  PreparedObjectField,
+  OperationRootNamespace, OperationNamespaceField, NamedGQLType, Scalar,
 } from '../types';
 import {
-  formatRequiredTypes,
-  getCompiledOperationName,
-  formatDescription, toCamelCase,
+  formatImportTypes,
+  formatDescription, toCamelCase, withSpaces,
 } from './misc';
 
 /**
  * Universal TS definition generator
- * @param {ParsedGQLType} parsedType
- * @param schemaFileName
+ * @param type
  * @param scalars
  * @returns {string}
  */
 export function generateTSTypeDefinition(
-  parsedType: ParsedGQLType,
-  schemaFileName: string,
-  scalars: Scalars,
+  type: NamedGQLType,
+  scalars: ScalarsMap,
 ): string {
-  if ('values' in parsedType) {
-    return generateGQLEnum(parsedType);
+  if (type.__type === 'union') {
+    return generateUnion(type);
   }
-  if ('types' in parsedType) {
-    return generateGQLUnion(parsedType, schemaFileName);
+  if (type.__type === 'scalar') {
+    return generateScalar(type, scalars);
   }
-  if ('fields' in parsedType) {
-    return generateGQLInterface(parsedType, schemaFileName);
+  if (type.__type === 'enum') {
+    return generateEnum(type);
   }
-  return generateGQLScalar(parsedType, scalars);
+  return generateEntity(type);
 }
 
 /**
- * GQL interface or type => TS interface
- * @param {ParsedGQLObjectType | ParsedGQLInterfaceType} parsedType
- * @param schemaFileName
- * @param importsRequired
+ * Converts prepared object field to string
+ * @param {PreparedObjectField} field
+ * @param includeDescription
  * @returns {string}
  */
-export function generateGQLInterface(
-  parsedType: ParsedGQLObjectType | ParsedGQLInterfaceType,
-  schemaFileName: string,
-  importsRequired = false,
+export function generatePreparedObjectField(
+  field: PreparedObjectField,
+  includeDescription = false,
 ): string {
-  const {name, description, fields} = parsedType;
-  const {definition, requiredTypes} = [...fields].reduce<DefinitionWithRequiredTypes>(
-    (acc, f) => {
-      const {definition, description, name, requiredTypes} = f;
-      const fullDefinition = formatDescription(description, 2)
-        + `  ${name}: ${definition};\n`;
+  const {name, description, type} = field;
+  return (includeDescription ? formatDescription(description) : '')
+    + `${name}: ${type};\n`;
+}
 
-      acc.definition += fullDefinition;
+/**
+ * Converts prepared object to string
+ * @param {PreparedObject} obj
+ * @param includeDescription
+ * @returns {string}
+ */
+export function generatePreparedObject(
+  obj: PreparedObject,
+  includeDescription = false,
+): string {
+  const {name, description, fields} = obj;
+  const definition = fields.reduce<string>((acc, f) => {
+    return acc + generatePreparedObjectField(f, false);
+  }, '');
 
-      if (importsRequired) {
-        for (const type of requiredTypes) {
-          if (!acc.requiredTypes.includes(type)) {
-            acc.requiredTypes.push(type);
-          }
-        }
-      }
-      return acc;
-    },
-    {definition: '\n', requiredTypes: []},
-  );
+  return (includeDescription ? formatDescription(description) : '')
+    + `export interface ${toCamelCase(name)} {\n`
+    + withSpaces(definition, 2)
+    + '}\n';
+}
 
-  return formatRequiredTypes(requiredTypes, schemaFileName)
-    + formatDescription(description)
-    + `export interface ${name} {${definition}}`
+/**
+ * GQL entity => TS interface + namespace?
+ * @param {Entity} entity
+ * @returns {string}
+ */
+export function generateEntity(entity: Entity): string {
+  const {namespace, fields} = entity;
+
+  const {name, description, fields: namespaceFields} = namespace;
+  const nspDefinition = namespaceFields.reduce<string>((acc, f, idx) => {
+    if (idx !== 0) {
+      acc += '\n';
+    }
+    acc += formatDescription(f.description)
+      + `export type ${f.name} = ${f.type};\n`;
+
+    if (f.args !== null && f.args.fields.length > 0) {
+      const argsDefinition = generatePreparedObject(f.args);
+      acc += `export namespace ${f.name} {\n`
+        + withSpaces(argsDefinition, 2)
+        + '\n}\n';
+    }
+
+    return acc;
+  }, '');
+
+  return formatDescription(description)
+    + `export namespace ${toCamelCase(name)} {\n`
+    + withSpaces(nspDefinition, 2)
+    + `\n}\n\n`
+    + generatePreparedObject(fields, false);
 }
 
 /**
  * GQL enum => TS enum
- * @param {ParsedGQLEnumType} parsedType
  * @returns {string}
+ * @param type
  */
-export function generateGQLEnum(parsedType: ParsedGQLEnumType): string {
-  const {name, description, values} = parsedType;
-  const content = values.reduce<string>((acc, v) => {
-    const {description, value} = v;
+export function generateEnum(type: Enum): string {
+  const {name, description, values} = type;
+  const definition = values.reduce<string>((acc, v) => {
+    const {description, name} = v;
 
     return acc
-      + formatDescription(description, 2)
-      + `  ${value} = "${value}",\n`;
-  }, '\n');
+      + formatDescription(description)
+      + `${name} = '${name}',\n`;
+  }, '');
 
   return formatDescription(description)
-    + `export enum ${name} {${content}}`;
+    + `export enum ${name} {\n`
+    + withSpaces(definition, 2)
+    + '}\n';
 }
 
 /**
  * GQL scalar => TS type
- * @param {ParsedGQLScalarType} parsedType
+ * @param type
  * @param scalars
  * @returns {string}
  */
-export function generateGQLScalar(
-  parsedType: ParsedGQLScalarType,
-  scalars: Scalars,
+export function generateScalar(
+  type: Scalar,
+  scalars: ScalarsMap,
 ): string {
-  const {description, name} = parsedType;
+  const {description, name} = type;
   let definition: string | number = 'any';
 
   if (name in scalars) {
@@ -115,110 +143,110 @@ export function generateGQLScalar(
       throw new Error(
         `Unable to use passed scalar ${name} due to its type is not`
         + 'number or string',
-      )
+      );
     }
     definition = scalars[name];
   }
 
-  return formatDescription(description) + `export type ${name} = ${definition};`
+  return formatDescription(description)
+    + `export type ${name} = ${definition};\n`;
 }
 
 /**
  * GQL union => TS type
- * @param {ParsedGQLUnionType} parsedType
- * @param schemaFileName
  * @returns {string}
+ * @param type
  */
-export function generateGQLUnion(
-  parsedType: ParsedGQLUnionType,
-  schemaFileName: string,
-): string {
-  const {description, name, types, requiredTypes} = parsedType;
+export function generateUnion(type: Union): string {
+  const {description, name, types} = type;
 
-  return formatRequiredTypes(requiredTypes, schemaFileName)
-    + formatDescription(description)
-    + `export type ${name} = ${types.join(' | ')};`;
+  return formatDescription(description)
+    + `export type ${name} = ${types.join(' | ')};\n`;
 }
 
 /**
- * GQL variables => TS interface
- * @param {ParsedGQLVariableDefinitions} variables
- * @param {string} schemaFileName
- * @param {boolean} importsRequired
+ * Generates operation namespace field
+ * @param {OperationNamespaceField} field
  * @returns {string}
  */
-export function generateGQLOperationVariables(
-  variables: ParsedGQLVariableDefinitions,
-  schemaFileName: string,
-  importsRequired = false,
+export function generateOperationNamespaceField(
+  field: OperationNamespaceField,
 ): string {
-  const {name, fields} = variables;
-  const {definition, requiredTypes} = [...fields].reduce<DefinitionWithRequiredTypes>(
-    (acc, f) => {
-      const {definition, name, requiredTypes} = f;
+  const {type, description, name, fields} = field;
+  let result = formatDescription(description);
 
-      acc.definition += `  ${name}: ${definition};\n`;
+  if ('definition' in type) {
+    result += formatDescription(description)
+      + `export type ${name} = ${type.definition};\n`;
+  } else {
+    result += generatePreparedObject(type, true);
 
-      if (importsRequired) {
-        for (const type of requiredTypes) {
-          if (!acc.requiredTypes.includes(type)) {
-            acc.requiredTypes.push(type);
-          }
-        }
-      }
-      return acc;
-    },
-    {definition: '\n', requiredTypes: []},
-  );
+    if (fields && fields.length > 0) {
+      const content = fields.reduce<string>((acc, f) => {
+        return acc + generateOperationNamespaceField(f);
+      }, '');
+      result += `export namespace ${toCamelCase(name)} {\n`
+        + withSpaces(content, 2)
+        + '}\n';
+    }
+  }
 
-  return formatRequiredTypes(requiredTypes, schemaFileName)
-    + `export interface ${name} {${definition}}`
+  return result;
+}
+
+/**
+ * Generates operation root namespace
+ * @param {OperationRootNamespace} nsp
+ * @returns {string}
+ */
+export function generateOperationRootNamespace(
+  nsp: OperationRootNamespace,
+): string {
+  const {name, args, fields} = nsp;
+  // Namespace
+  let content = generatePreparedObject(args);
+
+  fields.forEach(f => {
+    content += generateOperationNamespaceField(f);
+  });
+
+  return `export namespace ${name} {\n`
+    + withSpaces(content, 2)
+    + '}\n';
 }
 
 /**
  * GQL operation => TS interfaces
  * @returns {string}
- * @param parsedType
+ * @param operation
  * @param schemaFileName
- * @param defaultExport
  * @param wrapWithTag
  */
-export function generateGQLOperation(
-  parsedType: ParsedGQLOperationDefinitionNode,
+export function generateOperation(
+  operation: Operation,
   schemaFileName: string,
-  defaultExport: boolean,
   wrapWithTag: boolean,
 ): string {
-  const {
-    originalName, operationType, operationDefinition, variables, requiredTypes,
-    operationSignature,
-  } = parsedType;
-  const operationName = getCompiledOperationName(originalName, operationType);
-  const operationStringName = originalName + toCamelCase(operationType);
-  const variablesDefinition = variables.fields.length === 0 ? '' : (
-    generateGQLOperationVariables(variables, schemaFileName, true) + '\n\n'
-  );
+  const {selection, namespace, name, signature, importTypes} = operation;
   const operationConst = wrapWithTag
-    ? `const ${operationStringName}: DocumentNode = gql(\`${operationSignature}\`);\n`
-    : `const ${operationStringName}: string = \`${operationSignature}\`;\n`;
+    ? `const ${name}: DocumentNode = gql(\`${signature}\`);\n`
+    : `const ${name}: string = \`${signature}\`;\n`;
 
   // If graphql-tag required, import it
   let gqlTagImport = '';
 
   if (wrapWithTag) {
     gqlTagImport = 'import gql from \'graphql-tag\';\n'
-    + 'import { DocumentNode } from \'graphql\';';
+      + 'import { DocumentNode } from \'graphql\';\n\n';
   }
 
   return gqlTagImport
     // Required types import
-    + formatRequiredTypes(requiredTypes, schemaFileName)
+    + formatImportTypes(importTypes, schemaFileName)
+    // Namespace
+    + generateOperationRootNamespace(namespace)
     // Operation result interface
-    + `export interface ${operationName} ${operationDefinition}\n\n`
-    // Operation variables interface
-    + variablesDefinition
+    + generatePreparedObject(selection)
     // Operation export
-    + (defaultExport
-      ? (operationConst + `export default ${operationStringName};`)
-      : `export ${operationConst}`);
+    + `export ${operationConst}`;
 }

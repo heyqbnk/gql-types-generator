@@ -2,7 +2,7 @@
 import {Command} from 'commander';
 import {compile} from './compiler';
 import {withCwd} from './fs';
-import {Scalars} from './types';
+import {ScalarsMap} from './types';
 
 const program = new Command('gql-types-generator');
 
@@ -57,7 +57,7 @@ program
       operations, removeDescription, display, outputDirectory, operationsFile,
       schemaFile, operationsWrap, scalars,
     } = program;
-    let scalarsParsed: Scalars = {};
+    let scalarsParsed: ScalarsMap = {};
 
     if (typeof scalars === 'string') {
       let error = false;

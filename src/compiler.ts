@@ -6,7 +6,7 @@ import {
 import {createDirectory, getFileContentByPath, getFileName} from './fs';
 import {
   parseNamedType,
-  generateGQLOperation,
+  generateOperation,
   generateTSTypeDefinition,
   getSorter,
   parseOperationDefinitionNode,
@@ -117,12 +117,12 @@ export async function compileSchema(options: CompileSchemaOptions) {
 
   // Get schema definition
   let schemaDefinition = types.reduce<string[]>((acc, type) => {
-    // We parse only types used in schema. We can meet internal types. Internal
-    // types dont have astNode
+    // We parse only types defined in schema. We can meet internal types.
+    // Internal types dont have astNode
     const parsed = parseNamedType(type);
 
     if (parsed) {
-      acc.push(generateTSTypeDefinition(parsed, fileName, scalars));
+      acc.push(generateTSTypeDefinition(parsed, scalars));
     }
 
     return acc;
@@ -167,10 +167,9 @@ export async function compileOperations(options: CompileOperationsOptions) {
     .reduce<CompiledOperation[]>((acc, node) => {
       if (node.kind === 'OperationDefinition') {
         const {name, operation} = node;
-        const ts = generateGQLOperation(
+        const ts = generateOperation(
           parseOperationDefinitionNode(node, schema, operations),
           schemaFileName,
-          !singleFile,
           wrapWithTag,
         );
 

@@ -1,0 +1,14 @@
+query getActiveRace {
+  activeRace {
+    currentQuestion {
+      title
+      selectedOptions
+      sentAt
+      options
+      index
+    }
+    currentSpeed
+    currentServerTime
+    startedAt
+  }
+}

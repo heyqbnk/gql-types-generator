@@ -1,0 +1,6 @@
+query getColorsInfo {
+  colorsInfo {
+    cartColor
+    costumeColor
+  }
+}

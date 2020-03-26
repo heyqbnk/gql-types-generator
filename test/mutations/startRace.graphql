@@ -1,0 +1,14 @@
+mutation startRace {
+  startRace {
+    currentQuestion {
+      title
+      selectedOptions
+      sentAt
+      options
+      index
+    }
+    currentSpeed
+    currentServerTime
+    startedAt
+  }
+}

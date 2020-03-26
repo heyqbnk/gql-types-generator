@@ -1,0 +1,10 @@
+query getRatingDayPage($input: RatingPageInput!) {
+  ratingDayPage(input: $input) {
+    bestAverageSpeed
+    bestTime
+    costumeColor
+    name
+    penaltyTime
+    profileImageUrl
+  }
+}

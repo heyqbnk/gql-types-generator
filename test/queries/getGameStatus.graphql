@@ -1,0 +1,14 @@
+query getGameStatus {
+  gameStatus {
+    hasActiveRace
+    hasFinalRace
+    lastRace {
+      averageSpeed
+      correctAnswersCount
+      time
+    }
+    isDayRideable
+    racesCountAvailable
+    racesCountThisDay
+  }
+}

@@ -11,7 +11,7 @@ export type DisplayType = 'as-is' | 'default';
 /**
  * Scalars map
  */
-export interface Scalars {
+export interface ScalarsMap {
   [name: string]: string | number;
 }
 
@@ -49,7 +49,7 @@ export interface CompileOptions {
   schemaFileName?: string;
   operationsFileName?: string;
   operationsWrap?: boolean;
-  scalars?: Scalars;
+  scalars?: ScalarsMap;
 }
 
 /**
@@ -69,7 +69,7 @@ export interface CompileSchemaOptions {
   fileName?: string;
   display?: DisplayType;
   removeDescription?: boolean;
-  scalars?: Scalars;
+  scalars?: ScalarsMap;
 }
 
 /**
