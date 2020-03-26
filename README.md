@@ -96,7 +96,8 @@ You can find library test right [here](https://github.com/wolframdeus/gql-types-
 
 ### Programmatic control
 Library provides such functions as `compile`, `compileSchema` and 
-`compileOperations` to generate types.
+`compileOperations` to generate types. [Type definitions for
+these functions](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts).
 
 ---
 
@@ -108,8 +109,8 @@ Library provides such functions as `compile`, `compileSchema` and
 | `options.outputDirectory` | `string` | Full path to output directory |
 | `options.removeDescription` | `boolean?` | Should library remove descriptions |
 | `options.display` | `DisplayType?` | How to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema |
-| `options.schemaPath` | `PathType` | Defines paths to schema. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts#L23-L26) for more |
-| `options.operationsPath` | `PathType?` | Defines paths to operations. Watch [possible values](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts#L23-L26) for more |
+| `options.schemaPath` | `PathType` | Defines paths to schema |
+| `options.operationsPath` | `PathType?` | Defines paths to operations |
 | `options.schemaFileName` | `string?` | Defines schema file name. For example - `schema.ts` |
 | `options.operationsFileName` | `string?` | Defines operations file name. For example - `operation.ts`. If passed, all operations will be placed into a single file |
 | `options.operationsWrap` | `boolean?` | States of compiled types should be `graphql`s `DocumentNode` and not string |
