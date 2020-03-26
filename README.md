@@ -91,7 +91,7 @@ namespaces
 - `js` exports representation of operation
 
 ### Compiled types example
-You can find library test right [here](src/test). Just use command in 
+You can find library test right [here](https://github.com/wolframdeus/gql-types-generator/blob/master/test/command). Just use command in 
 `command` file and look what happens.
 
 ### Programmatic control
