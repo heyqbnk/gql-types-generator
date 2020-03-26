@@ -1,1 +1,1 @@
-gql-types-generator --operations test/operations/**/*.graphql --operations-wrap --scalars "{\"DateTime\": \"string\"}" --output-directory test/compiled test/schema/*.graphql
+gql-types-generator --operations example/operations/**/*.graphql --operations-wrap --scalars "{\"DateTime\": \"string\"}" --output-directory example/compiled example/schema/*.graphql
