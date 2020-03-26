@@ -53,34 +53,35 @@ program
   )
   .arguments('<schema-globs>')
   .action(async schemaPath => {
-    const {
-      operations, removeDescription, display, outputDirectory, operationsFile,
-      schemaFile, operationsWrap, scalars,
-    } = program;
-    let scalarsParsed: ScalarsMap = {};
-
-    if (typeof scalars === 'string') {
-      let error = false;
-
-      try {
-        scalarsParsed = JSON.parse(scalars);
-        error = Object.values(scalarsParsed).some(v => {
-          return typeof v !== 'string' && typeof v !== 'number';
-        });
-      } catch (e) {
-        error = true;
-      }
-
-      if (error) {
-        throw new Error(
-          'Scalars has invalid format. It must be a map containing scalar ' +
-          'names as keys and type definitions as values',
-        )
-      }
-    }
     let exitCode = 0;
 
     try {
+      const {
+        operations, removeDescription, display, outputDirectory, operationsFile,
+        schemaFile, operationsWrap, scalars,
+      } = program;
+      let scalarsParsed: ScalarsMap = {};
+
+      if (typeof scalars === 'string') {
+        let error = false;
+
+        try {
+          scalarsParsed = JSON.parse(scalars);
+          error = Object.values(scalarsParsed).some(v => {
+            return typeof v !== 'string' && typeof v !== 'number';
+          });
+        } catch (e) {
+          error = true;
+        }
+
+        if (error) {
+          throw new Error(
+            'Scalars has invalid format. It must be a map containing scalar ' +
+            'names as keys and type definitions as values',
+          )
+        }
+      }
+
       await compile({
         operationsPath: operations ? {
           glob: {
