@@ -1,0 +1,10 @@
+subscription waitForNewPost {
+  newPost{
+    author {
+      name
+    }
+    category
+    createdAt
+    postedAt
+  }
+}

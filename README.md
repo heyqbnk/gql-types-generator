@@ -13,7 +13,20 @@ gql-types-generator
 [version-image]: https://img.shields.io/npm/v/gql-types-generator
 
 Package to generate TypeScript types depending on GraphQL scheme, mutations and 
-queries.
+queries. 
+
+Currently supported GraphQL entities: `type`, `interface`, `input`,
+`type and interface fields arguments`, `operations` (of any kind and selections).
+
+GraphQL entities to be supported in near future: `fragments`, `inline fragments`,
+`directives`.
+
+> TLDR;
+>
+> If you dont want to read a lot of text and documentation, try to compile 
+> your scheme and look what happens. You can find an example
+> [here](https://github.com/wolframdeus/gql-types-generator/blob/master/example).
+> Just use command in `command` file.
 
 ## Install
 ```
@@ -24,15 +37,11 @@ yarn add gql-types-generator
 ```
 
 ## Usage
-`gql-types-generator` provides 2 ways of generating types:
-1. Command line interface;
-2. TypeScript / JavaScript code.
-
 ### Command line interface
 After installation of package is done, `gql-types-generator` command
-becomes available.
-
-```
+becomes available. Type to get help:
+```bash
+$ gql-types-generator --help
 Usage: gql-types-generator [options] <schema-globs>
 
 Options:
@@ -49,60 +58,18 @@ Options:
   -h, --help                       display help for command
 ```
 
-When using CLI, each glob will be formatted as process.cwd() + glob. You can
+When using CLI, each glob will be formatted as `process.cwd()` + glob. You can
 pass an array of globs using comma between them like 
-`src/schema1.graphql,src/schema2.graphql`
+`src/schema1.graphql,src/schema2.graphql`.
 
-### Compilation result
-#### Schema
-Command creates a directory on passed `--output-directory` path, generates 
-`{schemaFile}.d.ts` definition file and compiled `{schemaFile}.js` code.
- 
-`{schemaFile}.d.ts` contains all schema types and by default exports 
-constant `schema` which is a text or `graphql`'s `DocumentNode` representation 
-of schema.
-
-Each type definition consists of interface and namespace with the
-same name. All interface fields refers to namespace fields. So, if you want
-to get some `Query` field type you could use `Query['someField']` 
-or `Query.SomeField`. They return the same thing. It is recommended
-to use `Query.*`-like syntax for better experience.
-
-If `--scalars` passed, compiled type of scalar will be taken from this map.
-If scalar not found, it will be `any`. Must be stringified 
-`Record<string, string | number>`.
-
-#### Operations
-To compile operations, it is required to use `--operations` argument.
-
-Library creates single file with name `--operations-file` if it is passed
-or 2 separate files `d.ts` and `js` for each command with name
-`{operationName}{operationType}` in directory on passed `--output-directory`. 
-So, if operation was `query getUsers { ... }`, created files will be 
-`getUsersQuery.d.ts` and `getUsersQuery.js`.]
-
-If `--operations-wrap` passed, wraps each operation string with `graphql-tag`
-package making each operation not string, but `graphql`s `Document Node`.
-Useful when you use these operations on frontend with Apollo client.
-
-- `d.ts` exports selection and namespace with `Arguments` if they exist.
-Additionally namespace contains subselections represented as other
-namespaces
-- `js` exports representation of operation
-
-### Compiled types example
-You can find library test right [here](https://github.com/wolframdeus/gql-types-generator/blob/master/test/command). Just use command in 
-`command` file and look what happens.
+If an error occurring during types compilation, library returns code 1.
 
 ### Programmatic control
 Library provides such functions as `compile`, `compileSchema` and 
 `compileOperations` to generate types. [Type definitions for
 these functions](https://github.com/wolframdeus/gql-types-generator/blob/master/src/types/compilation.ts).
 
----
-
-### `compile(options: CompileOptions)`
-#### List of available options
+#### `compile(options: CompileOptions)`
 
 | Name | Type | Description |
 |---|---|---|
@@ -114,9 +81,9 @@ these functions](https://github.com/wolframdeus/gql-types-generator/blob/master/
 | `options.schemaFileName` | `string?` | Defines schema file name. For example - `schema.ts` |
 | `options.operationsFileName` | `string?` | Defines operations file name. For example - `operation.ts`. If passed, all operations will be placed into a single file |
 | `options.operationsWrap` | `boolean?` | States of compiled types should be `graphql`s `DocumentNode` and not string |
-| `options.scalars` | `Scalars?` | Defines types of scalars |
+| `options.scalars` | `ScalarsMap?` | Defines types of scalars |
 
-#### Example
+##### Example
 ```typescript
 import {compile} from 'gql-types-generator';
 import * as path from 'path';
@@ -162,10 +129,7 @@ compile({
 });
 ```
 
----
-
-### `compileSchema(options: CompileSchemaOptions)`
-#### List of available options
+#### `compileSchema(options: CompileSchemaOptions)`
 
 | Name | Type | Description |
 |---|---|---|
@@ -174,9 +138,9 @@ compile({
 | `options.fileName` | `string?` | Output schema file name |
 | `options.display` | `DisplayType?` | How to display compiled types. Valid values are "as-is" and "default". By default, generator compiles scalars first, then enums, interfaces, inputs, unions and then types. "as-is" places types as they are placed in schema |
 | `options.removeDescription` | `boolean?` | Should library remove descriptions |
-| `options.scalars` | `Scalars?` | Defines types of scalars |
+| `options.scalars` | `ScalarsMap?` | Defines types of scalars |
 
-#### Example
+##### Example
 ```typescript
 import {compileSchema} from 'gql-types-generator';
 import * as path from 'path';
@@ -190,10 +154,7 @@ compileSchema({
 });
 ```
 
----
-
-### `compileOperations(options: CompileOperationsOptions)`
-#### List of available options
+#### `compileOperations(options: CompileOperationsOptions)`
 
 | Name | Type | Description |
 |---|---|---|
@@ -205,7 +166,7 @@ compileSchema({
 | `options.fileName` | `string?` | Output operations file name. If passed, all operations will be placed into a single file |
 | `options.wrapWithTag` | `boolean?` | States of compiled types should be `graphql`s `DocumentNode` and not string |
 
-#### Example
+##### Example
 ```typescript
 import {compileOperations} from 'gql-types-generator';
 import * as path from 'path';
@@ -221,3 +182,42 @@ compileOperations({
   wrapWithTag: false,
 });
 ```
+
+## Compilation result
+### Schema
+Command creates a directory on passed `--output-directory` path, generates 
+`d.ts` definition file and compiled `js` code. Name of these files are taken
+from `--schema-file` argument (`schema.ts` by default).
+ 
+`d.ts` contains all schema types and by default exports constant `schema` 
+which is a text representation of schema.
+
+Each schema type definition consists of `interface` and `namespace` with the
+same name. All interface fields refers to namespace fields. So, if you want
+to get some `Query` field type you could use `Query['someField']` 
+or `Query.SomeField`. They return the same thing. It is recommended
+to use `Query.*`-like syntax for better experience.
+
+If `--scalars` passed, compiled type of scalar will be taken from this map.
+If scalar not found, it will be `any`. Must be a JSON with values of type
+string or number.
+
+### Operations
+To compile operations, it is required to use `--operations` argument. This
+values must be a glob which refers to files where operations are defined.
+
+Library creates single file with name `--operations-file` if it is passed
+or 2 separate files `d.ts` and `js` for each command with name computed as
+`operationName + toCamelCase(operationType)` in directory on passed 
+`--output-directory`. So, if operation was `query getUsers { ... }`, 
+created files will be `getUsersQuery.d.ts` and `getUsersQuery.js`.
+
+- `d.ts` exports selection and namespace with `Arguments` if they exist.
+Additionally namespace contains subselections represented as other
+namespaces
+- `js` exports representation of operation
+
+If `--operations-wrap` passed, wraps each operation string with `graphql-tag`
+package making each operation not string, but `graphql`s `Document Node`.
+Useful when you use these operations on frontend with Apollo client.
+

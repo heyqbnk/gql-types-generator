@@ -318,16 +318,7 @@ export function selectionSetToRootNamespace(
   rootNode: GraphQLObjectType,
 ): OperationRootNamespace {
   const nspFields = selectionSetToNamespaceFields(selectionSet, rootNode);
-  const importTypes = nspFields.reduce<string[]>((acc, f) => {
-    if (f.type.importTypes) {
-      f.type.importTypes.forEach(t => {
-        if (!acc.includes(t)) {
-          acc.push(t);
-        }
-      });
-    }
-    return acc;
-  }, []);
+  const importTypes = nspFields.flatMap(getImportTypes);
 
   return {
     name: compiledName,
@@ -335,6 +326,29 @@ export function selectionSetToRootNamespace(
     args,
     importTypes,
   };
+}
+
+/**
+ * Recursively gets required types from operation namespace field
+ * @param {OperationNamespaceField} field
+ * @returns {string[]}
+ */
+export function getImportTypes(field: OperationNamespaceField): string[] {
+  const types: string[] = [];
+
+  function addType(type: string) {
+    if (!types.includes(type)) {
+      types.push(type);
+    }
+  }
+
+  if (field.type.importTypes) {
+    field.type.importTypes.forEach(addType);
+  }
+  if (field.fields) {
+    field.fields.flatMap(getImportTypes).forEach(addType);
+  }
+  return types;
 }
 
 export function parseFieldNode(

@@ -1,0 +1,108 @@
+"Author of post"
+type PostAuthor {
+  "User full name"
+  name: String!
+  "Date when user was registered"
+  registeredAt: DateTime!
+  "Date when user was banned"
+  bannedAt: DateTime
+}
+
+"Usual post"
+interface Post {
+  "Post id"
+  id: ID!
+  "Post author"
+  author: PostAuthor!
+  "Post content"
+  text: String!
+  "Post category"
+  category: CATEGORY!
+  "Date when post was created"
+  createdAt: DateTime!
+  "Date when post was updated"
+  updatedAt: DateTime
+  "Date when post was deleted"
+  deletedAt: DateTime
+}
+
+"Post that already was posted"
+type PostedPost implements Post {
+  "Post id"
+  id: ID!
+  "Post author"
+  author: PostAuthor!
+  "Post content"
+  text: String!
+  "Post category"
+  category: CATEGORY!
+  "Date when post was created"
+  createdAt: DateTime!
+  "Date when post was updated"
+  updatedAt: DateTime
+  "Date when post was deleted"
+  deletedAt: DateTime
+  "Date when post was posted"
+  postedAt: DateTime!
+}
+
+"Post that is currently reviewed by moderators"
+type ModeratedPost implements Post {
+  "Post id"
+  id: ID!
+  "Post author"
+  author: PostAuthor!
+  "Post content"
+  text: String!
+  "Post category"
+  category: CATEGORY!
+  "Date when post was created"
+  createdAt: DateTime!
+  "Date when post was updated"
+  updatedAt: DateTime
+  "Date when post was deleted"
+  deletedAt: DateTime
+  "Date when moderation started"
+  startedModerationAt: DateTime!
+}
+
+"Any type of post"
+union AnyPost = ModeratedPost | PostedPost
+
+"Input to get posts"
+input PostsInput {
+  limit: Int!
+  offset: Int!
+}
+
+"Data to create post"
+input PostData {
+  "Post text"
+  content: String!
+  "Post category"
+  category: CATEGORY!
+}
+
+"Root Query type"
+type Query {
+  "Get certain post"
+  post(id: ID!): PostedPost
+  "Ge posts with limit and offset"
+  posts(input: PostsInput): [PostedPost!]!
+}
+
+"Root Mutation type"
+type Mutation {
+  "Updates post and returns updated entity"
+  updatePost(id: ID!, text: String!): PostedPost
+  "Deletes post"
+  deletePost(id: ID!): Boolean!
+  "Creates post"
+  createPost(data: PostData): ModeratedPost!
+}
+
+"Root Subscription type"
+type Subscription {
+  "Returns newly created post"
+  newPost: PostedPost!
+}

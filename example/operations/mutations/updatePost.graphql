@@ -1,0 +1,5 @@
+mutation updatePost($id: ID!, $text: String!) {
+  updatePost(id: $id, text: $text) {
+    updatedAt
+  }
+}

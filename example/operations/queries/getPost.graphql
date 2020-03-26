@@ -1,0 +1,10 @@
+query getPost($id: ID!) {
+  post(id: $id) {
+    author {
+      name
+    }
+    category
+    createdAt
+    postedAt
+  }
+}

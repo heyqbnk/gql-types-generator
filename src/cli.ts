@@ -78,27 +78,34 @@ program
         )
       }
     }
+    let exitCode = 0;
 
-    await compile({
-      operationsPath: operations ? {
-        glob: {
-          cwd: process.cwd(),
-          globs: operations.split(','),
+    try {
+      await compile({
+        operationsPath: operations ? {
+          glob: {
+            cwd: process.cwd(),
+            globs: operations.split(','),
+          },
+        } : null,
+        operationsWrap,
+        removeDescription,
+        schemaPath: {
+          glob: {
+            cwd: process.cwd(),
+            globs: schemaPath.split(','),
+          },
         },
-      } : null,
-      operationsWrap,
-      removeDescription,
-      schemaPath: {
-        glob: {
-          cwd: process.cwd(),
-          globs: schemaPath.split(','),
-        },
-      },
-      display,
-      outputDirectory: withCwd(outputDirectory),
-      schemaFileName: schemaFile,
-      operationsFileName: operationsFile,
-      scalars: scalarsParsed,
-    });
+        display,
+        outputDirectory: withCwd(outputDirectory),
+        schemaFileName: schemaFile,
+        operationsFileName: operationsFile,
+        scalars: scalarsParsed,
+      });
+    } catch (e) {
+      exitCode = 1;
+      console.log('An error occurred while compiling types', e);
+    }
+    process.exit(exitCode);
   })
   .parse(process.argv);

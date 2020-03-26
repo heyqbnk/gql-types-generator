@@ -1,0 +1,8 @@
+"All available project colors"
+enum CATEGORY {
+  NEWS,
+  SPORT,
+  HUMOR,
+  WAR,
+  PROGRAMMING
+}

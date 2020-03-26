@@ -1,0 +1,11 @@
+query getAllPosts {
+  posts {
+    author {
+      name
+    }
+    text
+    category
+    createdAt
+    postedAt
+  }
+}
