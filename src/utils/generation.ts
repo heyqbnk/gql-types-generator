@@ -53,20 +53,23 @@ export function generatePreparedObjectField(
 /**
  * Converts prepared object to string
  * @param {PreparedObject} obj
+ * @param formatName
  * @param includeDescription
  * @returns {string}
  */
 export function generatePreparedObject(
   obj: PreparedObject,
+  formatName: boolean,
   includeDescription = false,
 ): string {
   const {name, description, fields} = obj;
   const definition = fields.reduce<string>((acc, f) => {
     return acc + generatePreparedObjectField(f, false);
   }, '');
+  const formattedName = formatName ? toCamelCase(name) : name;
 
   return (includeDescription ? formatDescription(description) : '')
-    + `export interface ${toCamelCase(name)} {\n`
+    + `export interface ${formattedName} {\n`
     + withSpaces(definition, 2)
     + '}\n';
 }
@@ -88,7 +91,7 @@ export function generateEntity(entity: Entity): string {
       + `export type ${f.name} = ${f.type};\n`;
 
     if (f.args !== null && f.args.fields.length > 0) {
-      const argsDefinition = generatePreparedObject(f.args);
+      const argsDefinition = generatePreparedObject(f.args, true);
       acc += `export namespace ${f.name} {\n`
         + withSpaces(argsDefinition, 2)
         + '\n}\n';
@@ -101,7 +104,7 @@ export function generateEntity(entity: Entity): string {
     + `export namespace ${toCamelCase(name)} {\n`
     + withSpaces(nspDefinition, 2)
     + `\n}\n\n`
-    + generatePreparedObject(fields, false);
+    + generatePreparedObject(fields, false, false);
 }
 
 /**
@@ -179,7 +182,7 @@ export function generateOperationNamespaceField(
     result += formatDescription(description)
       + `export type ${name} = ${type.definition};\n`;
   } else {
-    result += generatePreparedObject(type, true);
+    result += generatePreparedObject(type, false, true);
 
     if (fields && fields.length > 0) {
       const content = fields.reduce<string>((acc, f) => {
@@ -204,7 +207,7 @@ export function generateOperationRootNamespace(
 ): string {
   const {name, args, fields} = nsp;
   // Namespace
-  let content = generatePreparedObject(args);
+  let content = generatePreparedObject(args, false);
 
   fields.forEach(f => {
     content += generateOperationNamespaceField(f);
@@ -246,7 +249,7 @@ export function generateOperation(
     // Namespace
     + generateOperationRootNamespace(namespace)
     // Operation result interface
-    + generatePreparedObject(selection)
+    + generatePreparedObject(selection, true)
     // Operation export
     + `export ${operationConst}`;
 }

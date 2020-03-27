@@ -91,13 +91,12 @@ export function parseObjectOrInterfaceType(
 
   return Object.values(fields).reduce<Entity>((acc, f) => {
     const {name: fieldName, type, description: fieldDescription, args} = f;
-    const formattedFieldName = toCamelCase(fieldName);
 
     // Fields
     acc.fields.fields.push({
       name: fieldName,
       description: fieldDescription,
-      type: `${formattedName}.${formattedFieldName}`,
+      type: `${formattedName}.${fieldName}`,
     });
 
     // Arguments
@@ -135,7 +134,7 @@ export function parseObjectOrInterfaceType(
     });
 
     acc.namespace.fields.push({
-      name: formattedFieldName,
+      name: fieldName,
       description: fieldDescription,
       args: preparedArguments,
       type: definition,
@@ -169,13 +168,12 @@ export function parseInputObjectType(type: GraphQLInputObjectType): Entity {
 
   return Object.values(fields).reduce<Entity>((acc, f) => {
     const {name: fieldName, type, description: fieldDescription} = f;
-    const formattedFieldName = toCamelCase(fieldName);
 
     // Fields
     acc.fields.fields.push({
       name: fieldName,
       description: fieldDescription,
-      type: `${formattedName}.${formattedFieldName}`,
+      type: `${formattedName}.${fieldName}`,
     });
 
     // Namespace
@@ -189,7 +187,7 @@ export function parseInputObjectType(type: GraphQLInputObjectType): Entity {
     });
 
     acc.namespace.fields.push({
-      name: formattedFieldName,
+      name: fieldName,
       description: fieldDescription,
       args: null,
       type: definition,
@@ -311,6 +309,14 @@ export function selectionSetToNamespaceFields(
   }, []);
 }
 
+/**
+ * Converts selection set to OperationRootNamespace
+ * @param {SelectionSetNode} selectionSet
+ * @param {string} compiledName
+ * @param {PreparedObject} args
+ * @param {GraphQLObjectType} rootNode
+ * @returns {OperationRootNamespace}
+ */
 export function selectionSetToRootNamespace(
   selectionSet: SelectionSetNode,
   compiledName: string,

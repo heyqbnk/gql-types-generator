@@ -19,51 +19,51 @@ export declare namespace Post {
     /**
      * Post id
      */
-    type Id = any;
+    type id = any;
     /**
      * Post author
      */
-    type Author = PostAuthor;
+    type author = PostAuthor;
     /**
      * Post content
      */
-    type Text = string;
+    type text = string;
     /**
      * Post category
      */
-    type Category = CATEGORY;
+    type category = CATEGORY;
     /**
      * Date when post was created
      */
-    type CreatedAt = DateTime;
+    type createdAt = DateTime;
     /**
      * Date when post was updated
      */
-    type UpdatedAt = DateTime | null;
+    type updatedAt = DateTime | null;
     /**
      * Date when post was deleted
      */
-    type DeletedAt = DateTime | null;
+    type deletedAt = DateTime | null;
 }
 export interface Post {
-    id: Post.Id;
-    author: Post.Author;
-    text: Post.Text;
-    category: Post.Category;
-    createdAt: Post.CreatedAt;
-    updatedAt: Post.UpdatedAt;
-    deletedAt: Post.DeletedAt;
+    id: Post.id;
+    author: Post.author;
+    text: Post.text;
+    category: Post.category;
+    createdAt: Post.createdAt;
+    updatedAt: Post.updatedAt;
+    deletedAt: Post.deletedAt;
 }
 /**
  * Input to get posts
  */
 export declare namespace PostsInput {
-    type Limit = number;
-    type Offset = number;
+    type limit = number;
+    type offset = number;
 }
 export interface PostsInput {
-    limit: PostsInput.Limit;
-    offset: PostsInput.Offset;
+    limit: PostsInput.limit;
+    offset: PostsInput.offset;
 }
 /**
  * Data to create post
@@ -72,15 +72,15 @@ export declare namespace PostData {
     /**
      * Post text
      */
-    type Content = string;
+    type content = string;
     /**
      * Post category
      */
-    type Category = CATEGORY;
+    type category = CATEGORY;
 }
 export interface PostData {
-    content: PostData.Content;
-    category: PostData.Category;
+    content: PostData.content;
+    category: PostData.category;
 }
 /**
  * Any type of post
@@ -93,8 +93,8 @@ export declare namespace Query {
     /**
      * Get certain post
      */
-    type Post = PostedPost | null;
-    namespace Post {
+    type post = PostedPost | null;
+    namespace post {
         interface Arguments {
             id: any;
         }
@@ -102,16 +102,16 @@ export declare namespace Query {
     /**
      * Ge posts with limit and offset
      */
-    type Posts = PostedPost[];
-    namespace Posts {
+    type posts = PostedPost[];
+    namespace posts {
         interface Arguments {
             input: PostsInput | null;
         }
     }
 }
 export interface Query {
-    post: Query.Post;
-    posts: Query.Posts;
+    post: Query.post;
+    posts: Query.posts;
 }
 /**
  * Post that already was posted
@@ -120,45 +120,45 @@ export declare namespace PostedPost {
     /**
      * Post id
      */
-    type Id = any;
+    type id = any;
     /**
      * Post author
      */
-    type Author = PostAuthor;
+    type author = PostAuthor;
     /**
      * Post content
      */
-    type Text = string;
+    type text = string;
     /**
      * Post category
      */
-    type Category = CATEGORY;
+    type category = CATEGORY;
     /**
      * Date when post was created
      */
-    type CreatedAt = DateTime;
+    type createdAt = DateTime;
     /**
      * Date when post was updated
      */
-    type UpdatedAt = DateTime | null;
+    type updatedAt = DateTime | null;
     /**
      * Date when post was deleted
      */
-    type DeletedAt = DateTime | null;
+    type deletedAt = DateTime | null;
     /**
      * Date when post was posted
      */
-    type PostedAt = DateTime;
+    type postedAt = DateTime;
 }
 export interface PostedPost {
-    id: PostedPost.Id;
-    author: PostedPost.Author;
-    text: PostedPost.Text;
-    category: PostedPost.Category;
-    createdAt: PostedPost.CreatedAt;
-    updatedAt: PostedPost.UpdatedAt;
-    deletedAt: PostedPost.DeletedAt;
-    postedAt: PostedPost.PostedAt;
+    id: PostedPost.id;
+    author: PostedPost.author;
+    text: PostedPost.text;
+    category: PostedPost.category;
+    createdAt: PostedPost.createdAt;
+    updatedAt: PostedPost.updatedAt;
+    deletedAt: PostedPost.deletedAt;
+    postedAt: PostedPost.postedAt;
 }
 /**
  * Author of post
@@ -167,20 +167,20 @@ export declare namespace PostAuthor {
     /**
      * User full name
      */
-    type Name = string;
+    type name = string;
     /**
      * Date when user was registered
      */
-    type RegisteredAt = DateTime;
+    type registeredAt = DateTime;
     /**
      * Date when user was banned
      */
-    type BannedAt = DateTime | null;
+    type bannedAt = DateTime | null;
 }
 export interface PostAuthor {
-    name: PostAuthor.Name;
-    registeredAt: PostAuthor.RegisteredAt;
-    bannedAt: PostAuthor.BannedAt;
+    name: PostAuthor.name;
+    registeredAt: PostAuthor.registeredAt;
+    bannedAt: PostAuthor.bannedAt;
 }
 /**
  * Root Mutation type
@@ -189,8 +189,8 @@ export declare namespace Mutation {
     /**
      * Updates post and returns updated entity
      */
-    type UpdatePost = PostedPost | null;
-    namespace UpdatePost {
+    type updatePost = PostedPost | null;
+    namespace updatePost {
         interface Arguments {
             id: any;
             text: string;
@@ -199,8 +199,8 @@ export declare namespace Mutation {
     /**
      * Deletes post
      */
-    type DeletePost = boolean;
-    namespace DeletePost {
+    type deletePost = boolean;
+    namespace deletePost {
         interface Arguments {
             id: any;
         }
@@ -208,17 +208,17 @@ export declare namespace Mutation {
     /**
      * Creates post
      */
-    type CreatePost = ModeratedPost;
-    namespace CreatePost {
+    type createPost = ModeratedPost;
+    namespace createPost {
         interface Arguments {
             data: PostData | null;
         }
     }
 }
 export interface Mutation {
-    updatePost: Mutation.UpdatePost;
-    deletePost: Mutation.DeletePost;
-    createPost: Mutation.CreatePost;
+    updatePost: Mutation.updatePost;
+    deletePost: Mutation.deletePost;
+    createPost: Mutation.createPost;
 }
 /**
  * Post that is currently reviewed by moderators
@@ -227,45 +227,45 @@ export declare namespace ModeratedPost {
     /**
      * Post id
      */
-    type Id = any;
+    type id = any;
     /**
      * Post author
      */
-    type Author = PostAuthor;
+    type author = PostAuthor;
     /**
      * Post content
      */
-    type Text = string;
+    type text = string;
     /**
      * Post category
      */
-    type Category = CATEGORY;
+    type category = CATEGORY;
     /**
      * Date when post was created
      */
-    type CreatedAt = DateTime;
+    type createdAt = DateTime;
     /**
      * Date when post was updated
      */
-    type UpdatedAt = DateTime | null;
+    type updatedAt = DateTime | null;
     /**
      * Date when post was deleted
      */
-    type DeletedAt = DateTime | null;
+    type deletedAt = DateTime | null;
     /**
      * Date when moderation started
      */
-    type StartedModerationAt = DateTime;
+    type startedModerationAt = DateTime;
 }
 export interface ModeratedPost {
-    id: ModeratedPost.Id;
-    author: ModeratedPost.Author;
-    text: ModeratedPost.Text;
-    category: ModeratedPost.Category;
-    createdAt: ModeratedPost.CreatedAt;
-    updatedAt: ModeratedPost.UpdatedAt;
-    deletedAt: ModeratedPost.DeletedAt;
-    startedModerationAt: ModeratedPost.StartedModerationAt;
+    id: ModeratedPost.id;
+    author: ModeratedPost.author;
+    text: ModeratedPost.text;
+    category: ModeratedPost.category;
+    createdAt: ModeratedPost.createdAt;
+    updatedAt: ModeratedPost.updatedAt;
+    deletedAt: ModeratedPost.deletedAt;
+    startedModerationAt: ModeratedPost.startedModerationAt;
 }
 /**
  * Root Subscription type
@@ -274,10 +274,10 @@ export declare namespace Subscription {
     /**
      * Returns newly created post
      */
-    type NewPost = PostedPost;
+    type newPost = PostedPost;
 }
 export interface Subscription {
-    newPost: Subscription.NewPost;
+    newPost: Subscription.newPost;
 }
 declare const schema: string;
 export default schema;
