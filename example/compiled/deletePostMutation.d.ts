@@ -8,4 +8,4 @@ export declare namespace DeletePostMutation {
 export interface DeletePostMutation {
     deletePost: DeletePostMutation.deletePost;
 }
-export declare const DeletePostMutation: DocumentNode;
+export declare const deletePostMutation: DocumentNode;

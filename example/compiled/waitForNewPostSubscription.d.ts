@@ -24,4 +24,4 @@ export declare namespace WaitForNewPostSubscription {
 export interface WaitForNewPostSubscription {
     newPost: WaitForNewPostSubscription.newPost;
 }
-export declare const WaitForNewPostSubscription: DocumentNode;
+export declare const waitForNewPostSubscription: DocumentNode;

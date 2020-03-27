@@ -25,4 +25,4 @@ export declare namespace GetPostQuery {
 export interface GetPostQuery {
     post: GetPostQuery.post;
 }
-export declare const GetPostQuery: DocumentNode;
+export declare const getPostQuery: DocumentNode;

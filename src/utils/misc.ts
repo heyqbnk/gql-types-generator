@@ -246,6 +246,19 @@ export function getCompiledOperationName(
   name: string,
   operation: string,
 ): string {
+  return name + toCamelCase(operation);
+}
+
+/**
+ * Returns compiled operation namespace name
+ * @param {string} name
+ * @param {string} operation
+ * @returns {string}
+ */
+export function getCompiledOperationNamespaceName(
+  name: string,
+  operation: string,
+): string {
   return toCamelCase(name) + toCamelCase(operation);
 }
 

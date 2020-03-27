@@ -15,4 +15,4 @@ export declare namespace UpdatePostMutation {
 export interface UpdatePostMutation {
     updatePost: UpdatePostMutation.updatePost;
 }
-export declare const UpdatePostMutation: DocumentNode;
+export declare const updatePostMutation: DocumentNode;

@@ -29,7 +29,7 @@ import {
   VariableDefinitionNode,
 } from 'graphql';
 import {
-  getCompiledOperationName,
+  getCompiledOperationName, getCompiledOperationNamespaceName,
   getIn, getIOTypeDefinition,
   getOperationRootNode,
   getTypeNodeDefinition,
@@ -414,6 +414,8 @@ export function parseOperationDefinitionNode(
 ): Operation {
   const {name, selectionSet, operation, variableDefinitions, loc} = node;
   const operationName = getCompiledOperationName(name.value, operation);
+  const operationNamespaceName =
+    getCompiledOperationNamespaceName(name.value, operation);
   const rootNode = getOperationRootNode(schema, operation);
   const importTypes: string[] = [];
 
@@ -426,7 +428,7 @@ export function parseOperationDefinitionNode(
   // Selection
   const selection: PreparedObject = {
     name: operationName,
-    fields: selectionSetToObjectFields(selectionSet, operationName),
+    fields: selectionSetToObjectFields(selectionSet, operationNamespaceName),
   };
 
   // Arguments
@@ -435,7 +437,7 @@ export function parseOperationDefinitionNode(
 
   // Namespace
   const namespace = selectionSetToRootNamespace(
-    selectionSet, operationName, args, rootNode,
+    selectionSet, operationNamespaceName, args, rootNode,
   );
   addImportTypes(namespace.importTypes);
 

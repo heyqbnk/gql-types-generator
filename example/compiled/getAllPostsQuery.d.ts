@@ -26,4 +26,4 @@ export declare namespace GetAllPostsQuery {
 export interface GetAllPostsQuery {
     posts: GetAllPostsQuery.posts;
 }
-export declare const GetAllPostsQuery: DocumentNode;
+export declare const getAllPostsQuery: DocumentNode;

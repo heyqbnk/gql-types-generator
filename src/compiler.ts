@@ -10,7 +10,6 @@ import {
   generateTSTypeDefinition,
   getSorter,
   parseOperationDefinitionNode,
-  toCamelCase,
   transpileWithFs,
 } from './utils';
 import {yellow} from 'chalk';
@@ -166,14 +165,10 @@ export async function compileOperations(options: CompileOperationsOptions) {
     .definitions
     .reduce<CompiledOperation[]>((acc, node) => {
       if (node.kind === 'OperationDefinition') {
-        const {name, operation} = node;
-        const ts = generateOperation(
-          parseOperationDefinitionNode(node, schema, operations),
-          schemaFileName,
-          wrapWithTag,
-        );
+        const parsed = parseOperationDefinitionNode(node, schema, operations);
+        const ts = generateOperation(parsed, schemaFileName, wrapWithTag);
 
-        acc.push({operationName: name.value + toCamelCase(operation), ts});
+        acc.push({operationName: parsed.name, ts});
       }
       return acc;
     }, []);
