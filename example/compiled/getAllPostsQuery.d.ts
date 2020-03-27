@@ -3,17 +3,17 @@ import { CATEGORY, DateTime } from './schema';
 export declare namespace GetAllPostsQuery {
     interface Arguments {
     }
-    interface posts {
+    type posts = {
         author: posts.author;
         text: posts.text;
         category: posts.category;
         createdAt: posts.createdAt;
         postedAt: posts.postedAt;
-    }
+    }[];
     namespace posts {
-        interface author {
+        type author = {
             name: author.name;
-        }
+        };
         namespace author {
             type name = string;
         }

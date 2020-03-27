@@ -4,6 +4,7 @@ import {
   WithImportTypes,
   Named, DefinitionWithImportTypes,
 } from './shared';
+import {GraphQLOutputType} from 'graphql';
 
 // shared
 export interface PreparedObjectField extends MaybeDescription, Named {
@@ -55,8 +56,12 @@ export interface Union extends MaybeDescription, Named {
 }
 
 // GQL operation
+export interface PreparedOperationNamespaceFieldType extends PreparedObject {
+  outputType: GraphQLOutputType;
+}
+
 export interface OperationNamespaceField extends MaybeDescription, Named {
-  type: DefinitionWithImportTypes | PreparedObject;
+  type: DefinitionWithImportTypes | PreparedOperationNamespaceFieldType;
   fields?: OperationNamespaceField[];
 }
 

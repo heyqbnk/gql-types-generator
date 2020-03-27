@@ -5,9 +5,9 @@ export declare namespace UpdatePostMutation {
         id: any;
         text: string;
     }
-    interface updatePost {
+    type updatePost = {
         updatedAt: updatePost.updatedAt;
-    }
+    } | null;
     namespace updatePost {
         type updatedAt = DateTime | null;
     }

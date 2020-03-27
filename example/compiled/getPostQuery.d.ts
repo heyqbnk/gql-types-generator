@@ -4,16 +4,16 @@ export declare namespace GetPostQuery {
     interface Arguments {
         id: any;
     }
-    interface post {
+    type post = {
         author: post.author;
         category: post.category;
         createdAt: post.createdAt;
         postedAt: post.postedAt;
-    }
+    } | null;
     namespace post {
-        interface author {
+        type author = {
             name: author.name;
-        }
+        };
         namespace author {
             type name = string;
         }

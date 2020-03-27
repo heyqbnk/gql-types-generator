@@ -372,6 +372,7 @@ export function fieldNodeToNamespaceField(
 ): OperationNamespaceField {
   const nodeName = node.name.value;
   const path = prevPath.length > 0 ? `${prevPath}.${nodeName}` : nodeName;
+  const outputType = getIn(rootNode, path).type;
 
   if (node.selectionSet) {
     return {
@@ -389,14 +390,14 @@ export function fieldNodeToNamespaceField(
           }
           return acc;
         }, []),
+        outputType,
       },
       fields: selectionSetToNamespaceFields(node.selectionSet, rootNode, path),
     }
   }
-  const type = getIn(rootNode, path).type;
   return {
     name: nodeName,
-    type: getIOTypeDefinition(type),
+    type: getIOTypeDefinition(outputType),
   }
 }
 

@@ -263,6 +263,30 @@ export function getCompiledOperationNamespaceName(
 }
 
 /**
+ * Returns met list and non-nullable wrappers
+ * @param {GraphQLOutputType} type
+ * @param definition
+ * @param nullable
+ * @returns {string}
+ */
+export function getOutputTypeDefinitionWithWrappers(
+  type: GraphQLOutputType,
+  definition: string,
+  nullable = true,
+): string {
+  if (isNonNullType(type)) {
+    return getOutputTypeDefinitionWithWrappers(type.ofType, definition, false);
+  }
+  let def = definition;
+
+  if (isListType(type)) {
+    def = `${def}[]`;
+  }
+
+  return nullable ? makeNullable(def) : def;
+}
+
+/**
  * Returns operation root node depending on operation type
  * @param {GraphQLSchema} schema
  * @param {OperationTypeNode} operation

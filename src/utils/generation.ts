@@ -6,13 +6,17 @@ import {
   PreparedObject,
   Operation,
   PreparedObjectField,
-  OperationRootNamespace, OperationNamespaceField, NamedGQLType, Scalar,
+  OperationRootNamespace,
+  OperationNamespaceField,
+  NamedGQLType,
+  Scalar,
+  PreparedOperationNamespaceFieldType,
 } from '../types';
 import {
   formatImportTypes,
   formatDescription,
   toCamelCase,
-  withSpaces,
+  withSpaces, getOutputTypeDefinitionWithWrappers,
 } from './misc';
 
 /**
@@ -74,6 +78,30 @@ export function generatePreparedObject(
     + `export interface ${formattedName} {\n`
     + withSpaces(definition, 2)
     + '}\n';
+}
+
+/**
+ * Converts PreparedOperationNamespaceFieldType to string
+ * @param {PreparedOperationNamespaceFieldType} type
+ * @returns {string}
+ */
+export function generatePreparedNamespaceField(
+  type: PreparedOperationNamespaceFieldType,
+): string {
+  const {name, description, fields, outputType} = type;
+  let definition = fields.reduce<string>((acc, f) => {
+    return acc + generatePreparedObjectField(f, false);
+  }, '');
+  console.log(outputType)
+  definition = getOutputTypeDefinitionWithWrappers(
+    outputType,
+    '{\n' + withSpaces(definition, 2) + '}',
+  );
+  console.log(formatDescription(description)
+    + `export type ${name} = ${definition}`)
+
+  return formatDescription(description)
+    + `export type ${name} = ${definition};\n`
 }
 
 /**
@@ -184,7 +212,7 @@ export function generateOperationNamespaceField(
     result += formatDescription(description)
       + `export type ${name} = ${type.definition};\n`;
   } else {
-    result += generatePreparedObject(type, false, true);
+    result += generatePreparedNamespaceField(type);
 
     if (fields && fields.length > 0) {
       const content = fields.reduce<string>((acc, f) => {

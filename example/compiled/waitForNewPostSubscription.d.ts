@@ -3,16 +3,16 @@ import { CATEGORY, DateTime } from './schema';
 export declare namespace WaitForNewPostSubscription {
     interface Arguments {
     }
-    interface newPost {
+    type newPost = {
         author: newPost.author;
         category: newPost.category;
         createdAt: newPost.createdAt;
         postedAt: newPost.postedAt;
-    }
+    };
     namespace newPost {
-        interface author {
+        type author = {
             name: author.name;
-        }
+        };
         namespace author {
             type name = string;
         }
