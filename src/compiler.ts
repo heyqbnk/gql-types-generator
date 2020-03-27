@@ -81,8 +81,7 @@ export async function compile(options: CompileOptions) {
       index += `export * from './${operationsName}';`;
     } else {
       compiledTypes.forEach(({operationName}) => {
-        index += `export * from './${operationName}';\n`
-          + `export { default as ${operationName} } from './${operationName}';\n`;
+        index += `export * from './${operationName}';\n`;
       });
     }
   }

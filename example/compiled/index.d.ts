@@ -1,12 +1,7 @@
 export { default as schema } from './schema';
 export * from './schema';
 export * from './deletePostMutation';
-export { default as deletePostMutation } from './deletePostMutation';
 export * from './updatePostMutation';
-export { default as updatePostMutation } from './updatePostMutation';
 export * from './getAllPostsQuery';
-export { default as getAllPostsQuery } from './getAllPostsQuery';
 export * from './getPostQuery';
-export { default as getPostQuery } from './getPostQuery';
 export * from './waitForNewPostSubscription';
-export { default as waitForNewPostSubscription } from './waitForNewPostSubscription';
