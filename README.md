@@ -195,7 +195,7 @@ which is a text representation of schema.
 Each schema type definition consists of `interface` and `namespace` with the
 same name. All interface fields refers to namespace fields. So, if you want
 to get some `Query` field type you could use `Query['someField']` 
-or `Query.SomeField`. They return the same thing. It is recommended
+or `Query.someField`. They return the same thing. It is recommended
 to use `Query.*`-like syntax for better experience.
 
 If `--scalars` passed, compiled type of scalar will be taken from this map.

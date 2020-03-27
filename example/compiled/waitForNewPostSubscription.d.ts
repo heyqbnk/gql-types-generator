@@ -3,25 +3,25 @@ import { CATEGORY, DateTime } from './schema';
 export declare namespace WaitForNewPostSubscription {
     interface Arguments {
     }
-    interface NewPost {
-        author: NewPost.Author;
-        category: NewPost.Category;
-        createdAt: NewPost.CreatedAt;
-        postedAt: NewPost.PostedAt;
+    interface newPost {
+        author: newPost.author;
+        category: newPost.category;
+        createdAt: newPost.createdAt;
+        postedAt: newPost.postedAt;
     }
-    namespace NewPost {
-        interface Author {
-            name: Author.Name;
+    namespace newPost {
+        interface author {
+            name: author.name;
         }
-        namespace Author {
-            type Name = string;
+        namespace author {
+            type name = string;
         }
-        type Category = CATEGORY;
-        type CreatedAt = DateTime;
-        type PostedAt = DateTime;
+        type category = CATEGORY;
+        type createdAt = DateTime;
+        type postedAt = DateTime;
     }
 }
 export interface WaitForNewPostSubscription {
-    newPost: WaitForNewPostSubscription.NewPost;
+    newPost: WaitForNewPostSubscription.newPost;
 }
-export declare const waitForNewPostSubscription: DocumentNode;
+export declare const WaitForNewPostSubscription: DocumentNode;

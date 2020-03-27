@@ -4,25 +4,25 @@ export declare namespace GetPostQuery {
     interface Arguments {
         id: any;
     }
-    interface Post {
-        author: Post.Author;
-        category: Post.Category;
-        createdAt: Post.CreatedAt;
-        postedAt: Post.PostedAt;
+    interface post {
+        author: post.author;
+        category: post.category;
+        createdAt: post.createdAt;
+        postedAt: post.postedAt;
     }
-    namespace Post {
-        interface Author {
-            name: Author.Name;
+    namespace post {
+        interface author {
+            name: author.name;
         }
-        namespace Author {
-            type Name = string;
+        namespace author {
+            type name = string;
         }
-        type Category = CATEGORY;
-        type CreatedAt = DateTime;
-        type PostedAt = DateTime;
+        type category = CATEGORY;
+        type createdAt = DateTime;
+        type postedAt = DateTime;
     }
 }
 export interface GetPostQuery {
-    post: GetPostQuery.Post;
+    post: GetPostQuery.post;
 }
-export declare const getPostQuery: DocumentNode;
+export declare const GetPostQuery: DocumentNode;

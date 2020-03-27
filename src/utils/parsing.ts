@@ -279,9 +279,10 @@ export function selectionSetToObjectFields(
   return selectionSet.selections.reduce<PreparedObjectField[]>((acc, s) => {
     // TODO: Fragments support
     if (s.kind === 'Field') {
+      const name = s.name.value;
       acc.push({
-        name: s.name.value,
-        type: `${nspName}.${toCamelCase(s.name.value)}`,
+        name,
+        type: `${nspName}.${name}`,
       });
     }
     return acc;
@@ -303,7 +304,7 @@ export function selectionSetToNamespaceFields(
   return selectionSet.selections.reduce<OperationNamespaceField[]>((acc, s) => {
     // TODO: Fragments support
     if (s.kind === 'Field') {
-      acc.push(parseFieldNode(s, rootNode, path));
+      acc.push(fieldNodeToNamespaceField(s, rootNode, path));
     }
     return acc;
   }, []);
@@ -357,27 +358,33 @@ export function getImportTypes(field: OperationNamespaceField): string[] {
   return types;
 }
 
-export function parseFieldNode(
+/**
+ * Converts FieldNode to OperationNamespaceField
+ * @param {FieldNode} node
+ * @param {GraphQLObjectType} rootNode
+ * @param {string} prevPath
+ * @returns {OperationNamespaceField}
+ */
+export function fieldNodeToNamespaceField(
   node: FieldNode,
   rootNode: GraphQLObjectType,
   prevPath: string,
 ): OperationNamespaceField {
-  const name = node.name.value;
-  const compiledName = toCamelCase(name);
-  const path = prevPath.length > 0 ? `${prevPath}.${name}` : name;
+  const nodeName = node.name.value;
+  const path = prevPath.length > 0 ? `${prevPath}.${nodeName}` : nodeName;
 
   if (node.selectionSet) {
     return {
-      name: compiledName,
+      name: nodeName,
       type: {
-        name: compiledName,
+        name: nodeName,
         fields: node.selectionSet.selections.reduce<PreparedObjectField[]>((acc, s) => {
           // TODO: Fragments support
           if (s.kind === 'Field') {
-            const selectionCompiledName = toCamelCase(s.name.value);
+            const selectionName = s.name.value;
             acc.push({
-              name: s.name.value,
-              type: `${compiledName}.${selectionCompiledName}`,
+              name: selectionName,
+              type: `${nodeName}.${selectionName}`,
             });
           }
           return acc;
@@ -388,7 +395,7 @@ export function parseFieldNode(
   }
   const type = getIn(rootNode, path).type;
   return {
-    name: compiledName,
+    name: nodeName,
     type: getIOTypeDefinition(type),
   }
 }
@@ -406,7 +413,7 @@ export function parseOperationDefinitionNode(
   operationsString: string,
 ): Operation {
   const {name, selectionSet, operation, variableDefinitions, loc} = node;
-  const compiledName = getCompiledOperationName(name.value, operation);
+  const operationName = getCompiledOperationName(name.value, operation);
   const rootNode = getOperationRootNode(schema, operation);
   const importTypes: string[] = [];
 
@@ -418,8 +425,8 @@ export function parseOperationDefinitionNode(
 
   // Selection
   const selection: PreparedObject = {
-    name: compiledName,
-    fields: selectionSetToObjectFields(selectionSet, compiledName),
+    name: operationName,
+    fields: selectionSetToObjectFields(selectionSet, operationName),
   };
 
   // Arguments
@@ -428,13 +435,13 @@ export function parseOperationDefinitionNode(
 
   // Namespace
   const namespace = selectionSetToRootNamespace(
-    selectionSet, compiledName, args, rootNode,
+    selectionSet, operationName, args, rootNode,
   );
   addImportTypes(namespace.importTypes);
 
   return {
     __type: 'operation',
-    name: name.value + toCamelCase(operation),
+    name: operationName,
     signature: operationsString.slice(loc.start, loc.end),
     selection,
     namespace,

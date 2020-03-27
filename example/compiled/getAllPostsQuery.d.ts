@@ -3,27 +3,27 @@ import { CATEGORY, DateTime } from './schema';
 export declare namespace GetAllPostsQuery {
     interface Arguments {
     }
-    interface Posts {
-        author: Posts.Author;
-        text: Posts.Text;
-        category: Posts.Category;
-        createdAt: Posts.CreatedAt;
-        postedAt: Posts.PostedAt;
+    interface posts {
+        author: posts.author;
+        text: posts.text;
+        category: posts.category;
+        createdAt: posts.createdAt;
+        postedAt: posts.postedAt;
     }
-    namespace Posts {
-        interface Author {
-            name: Author.Name;
+    namespace posts {
+        interface author {
+            name: author.name;
         }
-        namespace Author {
-            type Name = string;
+        namespace author {
+            type name = string;
         }
-        type Text = string;
-        type Category = CATEGORY;
-        type CreatedAt = DateTime;
-        type PostedAt = DateTime;
+        type text = string;
+        type category = CATEGORY;
+        type createdAt = DateTime;
+        type postedAt = DateTime;
     }
 }
 export interface GetAllPostsQuery {
-    posts: GetAllPostsQuery.Posts;
+    posts: GetAllPostsQuery.posts;
 }
-export declare const getAllPostsQuery: DocumentNode;
+export declare const GetAllPostsQuery: DocumentNode;

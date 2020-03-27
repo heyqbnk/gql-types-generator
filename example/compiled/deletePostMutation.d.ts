@@ -3,9 +3,9 @@ export declare namespace DeletePostMutation {
     interface Arguments {
         id: any;
     }
-    type DeletePost = boolean;
+    type deletePost = boolean;
 }
 export interface DeletePostMutation {
-    deletePost: DeletePostMutation.DeletePost;
+    deletePost: DeletePostMutation.deletePost;
 }
-export declare const deletePostMutation: DocumentNode;
+export declare const DeletePostMutation: DocumentNode;

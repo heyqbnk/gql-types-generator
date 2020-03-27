@@ -5,14 +5,14 @@ export declare namespace UpdatePostMutation {
         id: any;
         text: string;
     }
-    interface UpdatePost {
-        updatedAt: UpdatePost.UpdatedAt;
+    interface updatePost {
+        updatedAt: updatePost.updatedAt;
     }
-    namespace UpdatePost {
-        type UpdatedAt = DateTime | null;
+    namespace updatePost {
+        type updatedAt = DateTime | null;
     }
 }
 export interface UpdatePostMutation {
-    updatePost: UpdatePostMutation.UpdatePost;
+    updatePost: UpdatePostMutation.updatePost;
 }
-export declare const updatePostMutation: DocumentNode;
+export declare const UpdatePostMutation: DocumentNode;

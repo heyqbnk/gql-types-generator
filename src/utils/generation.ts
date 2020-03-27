@@ -10,7 +10,9 @@ import {
 } from '../types';
 import {
   formatImportTypes,
-  formatDescription, toCamelCase, withSpaces,
+  formatDescription,
+  toCamelCase,
+  withSpaces,
 } from './misc';
 
 /**
@@ -101,7 +103,7 @@ export function generateEntity(entity: Entity): string {
   }, '');
 
   return formatDescription(description)
-    + `export namespace ${toCamelCase(name)} {\n`
+    + `export namespace ${name} {\n`
     + withSpaces(nspDefinition, 2)
     + `\n}\n\n`
     + generatePreparedObject(fields, false, false);
@@ -188,7 +190,7 @@ export function generateOperationNamespaceField(
       const content = fields.reduce<string>((acc, f) => {
         return acc + generateOperationNamespaceField(f);
       }, '');
-      result += `export namespace ${toCamelCase(name)} {\n`
+      result += `export namespace ${name} {\n`
         + withSpaces(content, 2)
         + '}\n';
     }
