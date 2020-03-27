@@ -92,13 +92,10 @@ export function generatePreparedNamespaceField(
   let definition = fields.reduce<string>((acc, f) => {
     return acc + generatePreparedObjectField(f, false);
   }, '');
-  console.log(outputType)
   definition = getOutputTypeDefinitionWithWrappers(
     outputType,
     '{\n' + withSpaces(definition, 2) + '}',
   );
-  console.log(formatDescription(description)
-    + `export type ${name} = ${definition}`)
 
   return formatDescription(description)
     + `export type ${name} = ${definition};\n`
