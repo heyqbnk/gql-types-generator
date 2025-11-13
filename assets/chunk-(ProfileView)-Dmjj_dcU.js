@@ -1,0 +1,1 @@
+import{F as e,S as t,Y as n,b as r,p as i,x as a}from"./chunk-vue-router-CO2G3KrI.js";import"./chunk-pinia-D4sXMZ2t.js";import{i as o,t as s}from"./chunk-ViewBase-uq9FiM8W.js";var c=t({__name:`(ProfileView)`,setup(t){return(t,c)=>(e(),i(s,null,{default:n(()=>[a(o,null,{default:n(()=>[...c[0]||=[r(` Profile `,-1)]]),_:1})]),_:1}))}});export{c as default};
