@@ -1,1 +1,0 @@
-import{F as e,S as t,Y as n,b as r,p as i,x as a}from"./vue-router-Bf7xIcuF.js";import"./pinia-DfkjHjbi.js";import{i as o,t as s}from"./ViewBase-DjeqwVci.js";var c=t({__name:`(ProfileView)`,setup(t){return(t,c)=>(e(),i(s,null,{default:n(()=>[a(o,null,{default:n(()=>[...c[0]||=[r(` Profile `,-1)]]),_:1})]),_:1}))}});export{c as default};
