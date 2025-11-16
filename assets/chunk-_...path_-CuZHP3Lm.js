@@ -1,1 +1,0 @@
-import{F as e,S as t,h as n,i as r,r as i}from"./chunk-vue-router-CO2G3KrI.js";var a=t({__name:`[...path]`,setup(t){let a=r(),o=i();return console.warn(`Route not found`,o.params),a.replace(`/`),(t,r)=>(e(),n(`div`))}});export{a as default};

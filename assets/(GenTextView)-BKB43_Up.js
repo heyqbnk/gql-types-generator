@@ -1,0 +1,1 @@
+import{a,c as n}from"./ViewBase.vue_vue_type_style_index_0_lang-DudkF8bf.js";import{d as o,i as s,w as t,o as r,h as _,j as i}from"./index-DyoBB7oF.js";const p=o({__name:"(GenTextView)",setup(c){return(f,e)=>(r(),s(a,null,{default:t(()=>[_(n,null,{default:t(()=>[...e[0]||(e[0]=[i(" Gen text view ",-1)])]),_:1})]),_:1}))}});export{p as default};

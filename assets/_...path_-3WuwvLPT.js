@@ -1,0 +1,1 @@
+import{d as t,q as a,b as n,c as r,o as s}from"./index-DyoBB7oF.js";const m=t({__name:"[...path]",setup(c){const e=n(),o=a();return console.warn("Route not found",o.params),e.replace("/"),(u,p)=>(s(),r("div"))}});export{m as default};

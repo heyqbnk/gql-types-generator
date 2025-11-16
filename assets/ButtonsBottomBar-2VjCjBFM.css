@@ -1,0 +1,1 @@
+.buttons-bottom-bar{bottom:0;left:0;position:fixed;right:0}.buttons-bottom-bar__buttons{align-items:center;display:flex;gap:12px;justify-content:center}.buttons-bottom-bar__buttons--grid-auto{flex-wrap:wrap}.buttons-bottom-bar__buttons--grid-column{flex-flow:column}.buttons-bottom-bar__button{flex:1 0 calc(50% - 6px);width:100%}
